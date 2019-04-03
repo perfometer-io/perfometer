@@ -7,11 +7,16 @@ plugins {
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.1")
+    testImplementation(kotlin("test-junit"))
+    testImplementation("io.kotlintest:kotlintest-runner-junit5:3.3.0")
 }
 
 repositories {
     mavenCentral()
+}
+
+val test by tasks.getting(Test::class) {
+    useJUnitPlatform { }
 }
 
 val compileKotlin: KotlinCompile by tasks

@@ -9,11 +9,12 @@ sealed class HttpRequest(val host: String,
                          val body: ByteArray) {
 
     override fun equals(other: Any?): Boolean {
-        if (other !is HttpRequest) {
-            return false
-        }
-        return host == other.host && port == other.port && path == other.path &&
-                headers == other.headers && body.contentEquals(other.body)
+        return other is HttpRequest
+                && other::class == this::class
+                && host == other.host
+                && port == other.port
+                && path == other.path
+                && headers == other.headers && body.contentEquals(other.body)
     }
 
     override fun hashCode(): Int {
@@ -32,11 +33,15 @@ sealed class HttpRequest(val host: String,
 
 class Get(host: String, port: Int, path: String, headers: Map<String, String> = emptyMap(), body: ByteArray = ByteArray(0))
     : HttpRequest(host, port, path, headers, body)
+
 class Post(host: String, port: Int, path: String, headers: Map<String, String> = emptyMap(), body: ByteArray = ByteArray(0))
     : HttpRequest(host, port, path, headers, body)
+
 class Put(host: String, port: Int, path: String, headers: Map<String, String> = emptyMap(), body: ByteArray = ByteArray(0))
     : HttpRequest(host, port, path, headers, body)
+
 class Delete(host: String, port: Int, path: String, headers: Map<String, String> = emptyMap(), body: ByteArray = ByteArray(0))
     : HttpRequest(host, port, path, headers, body)
+
 class Patch(host: String, port: Int, path: String, headers: Map<String, String> = emptyMap(), body: ByteArray = ByteArray(0))
     : HttpRequest(host, port, path, headers, body)
