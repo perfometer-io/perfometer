@@ -5,7 +5,7 @@ import io.kotlintest.shouldNotBe
 import kotlin.test.Test
 
 @Suppress("FunctionName")
-class HttpRequestSpecification {
+class HttpRequestStepSpecification {
 
     @Test
     fun `should return false when comparing requests of different type`() {
@@ -21,5 +21,11 @@ class HttpRequestSpecification {
         val sameGet = Get("perfomerter.io", 443, "/")
 
         get shouldBe sameGet
+    }
+
+    @Test
+    fun `name should return uppercased HTTP Verb corresponding to the request class`() {
+        val getName = Get("perfometer.io", 443, "/").name
+        getName shouldBe "GET"
     }
 }
