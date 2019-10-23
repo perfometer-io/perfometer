@@ -1,6 +1,5 @@
 package io.perfometer.runner
 
 data class RunnerConfiguration(
-        val threadCount: Int = 1,
-        val trustAllCertificates: Boolean = false
+        val threadCount: Int = 1
 )

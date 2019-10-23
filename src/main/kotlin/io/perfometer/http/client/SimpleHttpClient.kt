@@ -1,13 +1,13 @@
 package io.perfometer.http.client
 
+import io.perfometer.http.HttpRequest
 import io.perfometer.http.HttpStatus
-import java.io.BufferedReader
-import java.io.InputStreamReader
 import java.net.HttpURLConnection
 
-class SimpleHttpClient : HttpClient {
+class SimpleHttpClient(private val trustAllCertificates: Boolean) : HttpClient {
 
-    override fun executeHttp(connection: HttpURLConnection): HttpStatus {
+    override fun executeHttp(request: HttpRequest): HttpStatus {
+        val connection = createHttpConnectionForRequest(request)
         try {
             connection.connect()
             connection.inputStream.bufferedReader().use { it.readText() }
@@ -18,4 +18,16 @@ class SimpleHttpClient : HttpClient {
             return HttpStatus(connection.responseCode)
         }
     }
+
+    private fun createHttpConnectionForRequest(request: HttpRequest): HttpURLConnection {
+        return httpConnection("https", request.host, request.port, request.path) {
+            if (trustAllCertificates) {
+                trustAllCertificates()
+            }
+            method(request.name)
+            headers(request.headers)
+            body(request.body)
+        }
+    }
+
 }
