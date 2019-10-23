@@ -5,7 +5,7 @@ import io.kotlintest.shouldBe
 import io.perfometer.dsl.scenario
 import io.perfometer.http.HttpStatus
 import io.perfometer.http.client.HttpClient
-import io.perfometer.printer.StatisticsPrinter
+import io.perfometer.statistics.printer.StatisticsPrinter
 import io.perfometer.statistics.ScenarioSummary
 import org.junit.Before
 import java.net.HttpURLConnection

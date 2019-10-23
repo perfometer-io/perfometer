@@ -3,18 +3,12 @@ package io.perfometer.runner
 import io.perfometer.http.*
 import io.perfometer.http.client.HttpClient
 import io.perfometer.http.client.httpConnection
-import io.perfometer.printer.StatisticsPrinter
+import io.perfometer.statistics.printer.StatisticsPrinter
 import io.perfometer.statistics.*
 import java.net.HttpURLConnection
-import java.security.SecureRandom
-import java.security.cert.X509Certificate
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.CompletableFuture
-import javax.net.ssl.HttpsURLConnection
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
 
 /**
  * @author Tomasz Tarczyński

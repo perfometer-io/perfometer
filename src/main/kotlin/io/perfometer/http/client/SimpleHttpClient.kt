@@ -10,7 +10,7 @@ class SimpleHttpClient : HttpClient {
     override fun executeHttp(connection: HttpURLConnection): HttpStatus {
         try {
             connection.connect()
-            BufferedReader(InputStreamReader(connection.inputStream)).use { }
+            connection.inputStream.bufferedReader().use { it.readText() }
         } catch (ignored: Exception) {
             // NOOP for now
         } finally {
@@ -19,4 +19,3 @@ class SimpleHttpClient : HttpClient {
         }
     }
 }
-
