@@ -1,6 +1,9 @@
 package io.perfometer.runner
 
-import io.perfometer.http.*
+import io.perfometer.http.PauseStep
+import io.perfometer.http.RequestStep
+import io.perfometer.http.Scenario
+import io.perfometer.http.Step
 import io.perfometer.http.client.HttpClient
 import io.perfometer.statistics.ConcurrentQueueScenarioStatistics
 import io.perfometer.statistics.PauseStatistics
@@ -35,7 +38,7 @@ internal class DefaultScenarioRunner(private val httpClient: HttpClient,
 
     private fun handleSteps(steps: List<Step>) = steps.forEach {
         when (it) {
-            is RequestStep -> executeHttp(it.request)
+            is RequestStep -> executeHttp(it)
             is PauseStep -> pauseFor(it.duration)
         }
     }
@@ -45,10 +48,11 @@ internal class DefaultScenarioRunner(private val httpClient: HttpClient,
         scenarioStatistics.gather(PauseStatistics(duration))
     }
 
-    private fun executeHttp(request: HttpRequest) {
+    private fun executeHttp(requestStep: RequestStep) {
         val startTime = Instant.now()
-        val httpStatus = httpClient.executeHttp(request)
+        val httpStatus = httpClient.executeHttp(requestStep.request, requestStep.response)
+        requestStep.response.status = httpStatus
         val timeElapsed = Duration.between(startTime, Instant.now())
-        scenarioStatistics.gather(RequestStatistics(request, timeElapsed, httpStatus))
+        scenarioStatistics.gather(RequestStatistics(timeElapsed, httpStatus))
     }
 }

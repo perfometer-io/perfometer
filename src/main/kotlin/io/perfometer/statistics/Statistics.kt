@@ -1,6 +1,5 @@
 package io.perfometer.statistics
 
-import io.perfometer.http.HttpRequest
 import io.perfometer.http.HttpStatus
 import java.time.Duration
 import java.time.Instant
@@ -12,8 +11,7 @@ import java.time.Instant
  */
 internal sealed class Statistics
 
-internal data class RequestStatistics(val request: HttpRequest,
-                                      val timeTaken: Duration,
+internal data class RequestStatistics(val timeTaken: Duration,
                                       val httpStatus: HttpStatus) : Statistics()
 
 internal data class PauseStatistics(val duration: Duration) : Statistics()
