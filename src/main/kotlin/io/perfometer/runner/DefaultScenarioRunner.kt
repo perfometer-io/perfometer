@@ -2,10 +2,11 @@ package io.perfometer.runner
 
 import io.perfometer.http.*
 import io.perfometer.http.client.HttpClient
-import io.perfometer.http.client.httpConnection
-import io.perfometer.printer.StatisticsPrinter
-import io.perfometer.statistics.*
-import java.net.HttpURLConnection
+import io.perfometer.statistics.ConcurrentQueueScenarioStatistics
+import io.perfometer.statistics.PauseStatistics
+import io.perfometer.statistics.RequestStatistics
+import io.perfometer.statistics.ScenarioStatistics
+import io.perfometer.statistics.printer.StatisticsPrinter
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.CompletableFuture
@@ -19,6 +20,10 @@ internal class DefaultScenarioRunner(private val httpClient: HttpClient,
 
     override fun run(scenario: Scenario, configuration: RunnerConfiguration) {
         scenarioStatistics = ConcurrentQueueScenarioStatistics(Instant.now())
+        runScenario(scenario, configuration)
+    }
+
+    private fun runScenario(scenario: Scenario, configuration: RunnerConfiguration) {
         CompletableFuture.allOf(
                 *(0 until configuration.threadCount)
                         .map { CompletableFuture.runAsync { handleSteps(scenario.steps) } }
@@ -42,16 +47,8 @@ internal class DefaultScenarioRunner(private val httpClient: HttpClient,
 
     private fun executeHttp(request: HttpRequest) {
         val startTime = Instant.now()
-        val httpStatus = httpClient.executeHttp(createHttpConnectionForRequest(request))
+        val httpStatus = httpClient.executeHttp(request)
         val timeElapsed = Duration.between(startTime, Instant.now())
         scenarioStatistics.gather(RequestStatistics(request, timeElapsed, httpStatus))
-    }
-
-    private fun createHttpConnectionForRequest(request: HttpRequest): HttpURLConnection {
-        return httpConnection("https", request.host, request.port, request.path) {
-            method(request.name)
-            headers(request.headers)
-            body(request.body)
-        }
     }
 }

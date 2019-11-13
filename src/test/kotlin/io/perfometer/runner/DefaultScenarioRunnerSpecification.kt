@@ -3,13 +3,13 @@ package io.perfometer.runner
 import io.kotlintest.matchers.numerics.shouldBeGreaterThanOrEqual
 import io.kotlintest.shouldBe
 import io.perfometer.dsl.scenario
+import io.perfometer.http.HttpRequest
 import io.perfometer.http.HttpStatus
+import io.perfometer.http.RequestStep
 import io.perfometer.http.client.HttpClient
-import io.perfometer.printer.StatisticsPrinter
+import io.perfometer.statistics.printer.StatisticsPrinter
 import io.perfometer.statistics.ScenarioSummary
 import org.junit.Before
-import java.net.HttpURLConnection
-import java.net.URL
 import java.time.Duration
 import kotlin.test.Test
 
@@ -17,10 +17,10 @@ import kotlin.test.Test
 class DefaultScenarioRunnerSpecification {
 
     private val httpClient = object : HttpClient {
-        val requests = mutableListOf<HttpURLConnection>()
-        override fun executeHttp(connection: HttpURLConnection): HttpStatus {
+        val requests = mutableListOf<HttpRequest>()
+        override fun executeHttp(request: HttpRequest): HttpStatus {
             synchronized(this) {
-                requests += connection
+                requests += request
             }
             return HttpStatus(200)
         }
@@ -46,11 +46,11 @@ class DefaultScenarioRunnerSpecification {
             get("/")
         }
 
-        val expectedConnection = URL("http://perfometer.io:80/").openConnection()
+        val expectedRequest = (scenario.steps.first() as RequestStep).request
 
         runner.run(scenario, RunnerConfiguration(threadCount = 1))
         httpClient.requests.size shouldBe 1
-        httpClient.requests.contains(expectedConnection)
+        httpClient.requests.contains(expectedRequest)
         statsPrinter.calls shouldBe 1
     }
 

@@ -2,7 +2,7 @@ package io.perfometer.statistics.printer
 
 import io.perfometer.statistics.ScenarioSummary
 
-internal interface StatisticsSummaryPrinter {
+internal interface StatisticsPrinter {
 
-    fun print(summary: ScenarioSummary)
+    fun print(scenarioSummary: ScenarioSummary)
 }
