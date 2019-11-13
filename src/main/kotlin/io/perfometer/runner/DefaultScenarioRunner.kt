@@ -20,10 +20,10 @@ internal class DefaultScenarioRunner(private val httpClient: HttpClient,
 
     override fun run(scenario: Scenario, configuration: RunnerConfiguration) {
         scenarioStatistics = ConcurrentQueueScenarioStatistics(Instant.now())
-        runThreads(configuration, scenario)
+        runScenario(scenario, configuration)
     }
 
-    private fun runThreads(configuration: RunnerConfiguration, scenario: Scenario) {
+    private fun runScenario(scenario: Scenario, configuration: RunnerConfiguration) {
         CompletableFuture.allOf(
                 *(0 until configuration.threadCount)
                         .map { CompletableFuture.runAsync { handleSteps(scenario.steps) } }

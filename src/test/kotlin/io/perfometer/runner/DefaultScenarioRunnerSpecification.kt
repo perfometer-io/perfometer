@@ -46,7 +46,7 @@ class DefaultScenarioRunnerSpecification {
             get("/")
         }
 
-        val expectedRequest = (scenario.steps[0] as RequestStep).request
+        val expectedRequest = (scenario.steps.first() as RequestStep).request
 
         runner.run(scenario, RunnerConfiguration(threadCount = 1))
         httpClient.requests.size shouldBe 1

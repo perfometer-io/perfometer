@@ -19,9 +19,9 @@ object TrustAllSslSocketFactoryProvider {
             override fun checkServerTrusted(certs: Array<X509Certificate>, authType: String) {}
         })
 
-        val sc = SSLContext.getInstance("SSL")
-        sc.init(null, dummyTrustManager, SecureRandom())
-        trustAllSslSocketFactory = sc.socketFactory
+        val sslContext = SSLContext.getInstance("SSL")
+        sslContext.init(null, dummyTrustManager, SecureRandom())
+        trustAllSslSocketFactory = sslContext.socketFactory
     }
 }
 
