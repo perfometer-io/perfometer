@@ -13,46 +13,50 @@ import io.perfometer.statistics.printer.StatisticsPrinter
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executors
 
-/**
- * @author Tomasz Tarczyński
- */
-internal class DefaultScenarioRunner(private val httpClient: HttpClient,
-                                     private val statisticsPrinter: StatisticsPrinter) : ScenarioRunner {
-    private lateinit var scenarioStatistics: ScenarioStatistics
+internal class DefaultScenarioRunner(private val httpClient : HttpClient,
+                                     private val statisticsPrinter : StatisticsPrinter) : ScenarioRunner {
+    private lateinit var scenarioStatistics : ScenarioStatistics
 
-    override fun run(scenario: Scenario, configuration: RunnerConfiguration) {
+    override fun run(scenario : Scenario, configuration : RunnerConfiguration) {
         scenarioStatistics = ConcurrentQueueScenarioStatistics(Instant.now())
         runScenario(scenario, configuration)
     }
 
-    private fun runScenario(scenario: Scenario, configuration: RunnerConfiguration) {
+    private fun runScenario(scenario : Scenario, configuration : RunnerConfiguration) {
+        val scenarioExecutor = Executors.newFixedThreadPool(configuration.threadCount)
         CompletableFuture.allOf(
                 *(0 until configuration.threadCount)
-                        .map { CompletableFuture.runAsync { handleSteps(scenario.steps) } }
+                        .map { CompletableFuture.runAsync(Runnable { handleSteps(scenario.steps) }, scenarioExecutor) }
                         .toTypedArray())
-                .thenRun { scenarioStatistics.endTime = Instant.now() }
-                .thenRun { statisticsPrinter.print(scenarioStatistics.getSummary()) }
+                .thenRun { statisticsPrinter.print(scenarioStatistics.finish()) }
                 .join()
+        scenarioExecutor.shutdown()
     }
 
-    private fun handleSteps(steps: List<Step>) = steps.forEach {
+    private fun handleSteps(steps : List<Step>) = steps.forEach {
         when (it) {
             is RequestStep -> executeHttp(it)
-            is PauseStep -> pauseFor(it.duration)
+            is PauseStep   -> pauseFor(it.duration)
         }
     }
 
-    private fun pauseFor(duration: Duration) {
+    private fun pauseFor(duration : Duration) {
         Thread.sleep(duration.toMillis())
         scenarioStatistics.gather(PauseStatistics(duration))
     }
 
-    private fun executeHttp(requestStep: RequestStep) {
+    private fun executeHttp(requestStep : RequestStep) {
         val startTime = Instant.now()
         val httpStatus = httpClient.executeHttp(requestStep.request, requestStep.response)
         requestStep.response.status = httpStatus
         val timeElapsed = Duration.between(startTime, Instant.now())
-        scenarioStatistics.gather(RequestStatistics(timeElapsed, httpStatus))
+        scenarioStatistics.gather(RequestStatistics(
+                requestStep.request.method,
+                requestStep.request.pathWithParams(),
+                timeElapsed,
+                httpStatus)
+        )
     }
 }

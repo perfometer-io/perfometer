@@ -2,13 +2,14 @@ package io.perfometer.runner
 
 import io.kotlintest.matchers.numerics.shouldBeGreaterThanOrEqual
 import io.kotlintest.shouldBe
+import io.perfometer.dsl.RequestBuilder
 import io.perfometer.dsl.scenario
-import io.perfometer.http.HttpRequest
+import io.perfometer.http.HttpResponse
 import io.perfometer.http.HttpStatus
 import io.perfometer.http.RequestStep
 import io.perfometer.http.client.HttpClient
-import io.perfometer.statistics.printer.StatisticsPrinter
 import io.perfometer.statistics.ScenarioSummary
+import io.perfometer.statistics.printer.StatisticsPrinter
 import org.junit.Before
 import java.time.Duration
 import kotlin.test.Test
@@ -17,8 +18,8 @@ import kotlin.test.Test
 class DefaultScenarioRunnerSpecification {
 
     private val httpClient = object : HttpClient {
-        val requests = mutableListOf<HttpRequest>()
-        override fun executeHttp(request: HttpRequest): HttpStatus {
+        val requests = mutableListOf<RequestBuilder>()
+        override fun executeHttp(request : RequestBuilder, response : HttpResponse) : HttpStatus {
             synchronized(this) {
                 requests += request
             }
@@ -28,7 +29,7 @@ class DefaultScenarioRunnerSpecification {
 
     private val statsPrinter = object : StatisticsPrinter {
         var calls = 0
-        override fun print(scenarioSummary: ScenarioSummary) {
+        override fun print(scenarioSummary : ScenarioSummary) {
             calls++
         }
     }
@@ -42,8 +43,8 @@ class DefaultScenarioRunnerSpecification {
 
     @Test
     fun `should execute single GET request on a single thread`() {
-        val scenario = scenario("perfomerter.io", 443) {
-            get("/")
+        val scenario = scenario("https", "perfomerter.io", 443) {
+            get().path { "/" }
         }
 
         val expectedRequest = (scenario.steps.first() as RequestStep).request
@@ -56,11 +57,11 @@ class DefaultScenarioRunnerSpecification {
 
     @Test
     fun `should execute 8 requests total on two async jobs`() {
-        val scenario = scenario("perfomerter.io", 80) {
-            get("/")
-            get("/")
-            delete("/delete")
-            delete("/delete")
+        val scenario = scenario("http","perfomerter.io", 80) {
+            get().path { "/" }
+            get().path { "/" }
+            delete().path { "/delete" }
+            delete().path { "/delete" }
         }
 
         runner.run(scenario, RunnerConfiguration(2))
@@ -70,7 +71,7 @@ class DefaultScenarioRunnerSpecification {
 
     @Test
     fun `should pause for at least two seconds`() {
-        val scenario = scenario("perfometer.io", 80) {
+        val scenario = scenario("https", "perfometer.io", 80) {
             pause(Duration.ofSeconds(2))
         }
 

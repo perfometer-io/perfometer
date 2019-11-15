@@ -1,9 +1,10 @@
 package io.perfometer.dsl
 
+import io.kotlintest.fail
 import io.kotlintest.shouldBe
-import io.perfometer.http.Get
+import io.perfometer.http.HttpMethod
 import io.perfometer.http.PauseStep
-import io.perfometer.http.Post
+import io.perfometer.http.RequestStep
 import java.time.Duration
 import kotlin.test.Test
 
@@ -13,46 +14,81 @@ internal class HttpDslSpecification {
     @Test
     fun `should create scenario with one get request`() {
 
-        val scenario = scenario("perfometer.io", 443) {
-            get("/")
+        val scenario = scenario("https", "perfometer.io", 443) {
+            get().path { "/" }
         }
 
         scenario.steps.size shouldBe 1
-        scenario.steps.first() shouldBe Get("perfometer.io", 443, "/")
+        when (val step = scenario.steps.first()) {
+            is RequestStep -> {
+                step.request.method shouldBe HttpMethod.GET
+                step.request.protocol shouldBe "https"
+                step.request.host shouldBe "perfometer.io"
+                step.request.port shouldBe 443
+            }
+            else           -> fail("Expected RequestStep")
+        }
     }
 
     @Test
-    fun `should create scenario with two get requests`() {
+    fun `should create scenario with two get requests, the second with params`() {
 
-        val scenario = scenario("perfometer.io", 443) {
-            get("/")
-            get("/path")
+        val scenario = scenario("https", "perfometer.io", 443) {
+            get().path { "/" }
+                    .header { HttpHeader("x-foo", "bar") }
+
+            get().path { "/path" }
+                    .param { HttpParam("foo", "bar") }
+                    .param { HttpParam("bar", "baz") }
         }
 
         scenario.steps.size shouldBe 2
-        scenario.steps[0] shouldBe Get("perfometer.io", 443, "/")
-        scenario.steps[1] shouldBe Get("perfometer.io", 443, "/path")
+        when (val step1 = scenario.steps[0]) {
+            is RequestStep -> {
+                step1.request.pathWithParams() shouldBe "/"
+                step1.request.headers() shouldBe mapOf("x-foo" to "bar")
+            }
+            else           -> fail("Expected RequestStep")
+        }
+
+        when (val step2 = scenario.steps[1]) {
+            is RequestStep -> {
+                step2.request.method shouldBe HttpMethod.GET
+                step2.request.pathWithParams() shouldBe "/path?foo=bar&bar=baz"
+            }
+            else           -> fail("Expected RequestStep")
+        }
+
     }
 
     @Test
     fun `should create scenario with post request`() {
 
-        val body = "foo bar".toByteArray()
-        val scenario = scenario("perfometer.io", 443) {
-            post("/", body)
+        val expectedBody = "foo bar".toByteArray()
+        val scenario = scenario("https", "perfometer.io", 443) {
+            post().path { "/" }
+                    .body { expectedBody }
         }
 
         scenario.steps.size shouldBe 1
-        scenario.steps[0] shouldBe Post("perfometer.io", 443, "/", body = body)
+        val step = scenario.steps.first() as RequestStep
+        step.request.method shouldBe HttpMethod.POST
+        step.request.body() shouldBe expectedBody
     }
 
     @Test
     fun `should add pause step`() {
-        val scenario = scenario("perfometer.io", 443) {
-            pause(Duration.ofMillis(2000))
+        val expectedDuration = Duration.ofMillis(2000)
+        val scenario = scenario("https", "perfometer.io", 443) {
+            pause(expectedDuration)
         }
 
         scenario.steps.size shouldBe 1
-        scenario.steps[0] shouldBe PauseStep(Duration.ofMillis(2000))
+        when (val step = scenario.steps.first()) {
+            is PauseStep -> {
+                step.duration shouldBe expectedDuration
+            }
+            else         -> fail("Expected PauseStep")
+        }
     }
 }

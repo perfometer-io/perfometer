@@ -10,6 +10,9 @@ enum class HttpMethod {
 
 data class HttpStatus(val code: Int) {
 
+    val generalError: Boolean
+        get() = code == -1
+
     val isInformative: Boolean
         get() = isCodeIn(100..199)
 
@@ -34,6 +37,6 @@ data class HttpStatus(val code: Int) {
 class HttpResponse(var status: HttpStatus? = null, var body: String = "") {
 
     fun jsonPath(s: String): String {
-        return ""
+        TODO()
     }
 }

@@ -1,7 +1,5 @@
 package io.perfometer.statistics
 
-import java.time.Instant
-
 internal interface ScenarioStatistics {
 
     /**
@@ -12,13 +10,5 @@ internal interface ScenarioStatistics {
      */
     fun gather(statistics: Statistics)
 
-    /**
-     * Returns a ScenarioSummary object build upon statistics gathered via the gather method.
-     *
-     */
-    fun getSummary(): ScenarioSummary
-
-    val startTime: Instant
-
-    var endTime: Instant
+    fun finish(): ScenarioSummary
 }

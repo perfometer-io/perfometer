@@ -8,7 +8,7 @@ import io.perfometer.statistics.printer.StdOutStatisticsPrinter
 fun main() {
 
     DefaultScenarioRunner(SimpleHttpClient(true), StdOutStatisticsPrinter())
-            .run(scenario("www.example.com", 443) {
+            .run(scenario("https","www.example.com", 443) {
                 // Provide your scenario here
             })
 }

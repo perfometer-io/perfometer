@@ -8,8 +8,9 @@ import java.net.HttpURLConnection
 class SimpleHttpClient(private val trustAllCertificates: Boolean) : HttpClient {
 
     override fun executeHttp(request: RequestBuilder, response: HttpResponse): HttpStatus {
-        val connection = createHttpConnectionForRequest(request)
+        var connection: HttpURLConnection? = null
         try {
+            connection = createHttpConnectionForRequest(request)
             connection.connect()
             connection.inputStream.bufferedReader().use {
                 response.body = it.readText()
@@ -17,18 +18,15 @@ class SimpleHttpClient(private val trustAllCertificates: Boolean) : HttpClient {
         } catch (ignored: Exception) {
             // NOOP for now
         } finally {
-            connection.disconnect()
-            val httpStatus = HttpStatus(connection.responseCode)
+            connection?.disconnect()
+            val httpStatus = HttpStatus(connection?.responseCode ?: -1)
             response.status = httpStatus
-            println(response)
             return httpStatus
         }
     }
 
     private fun createHttpConnectionForRequest(request: RequestBuilder): HttpURLConnection {
-        val path = request.pathWithParams()
-        println(path)
-        return httpConnection("https", request.host, request.port, path) {
+        return httpConnection(request.protocol, request.host, request.port, request.pathWithParams()) {
             if (trustAllCertificates) {
                 trustAllCertificates()
             }

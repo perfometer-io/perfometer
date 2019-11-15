@@ -3,21 +3,17 @@ package io.perfometer.statistics
 import java.time.Instant
 import java.util.concurrent.ConcurrentLinkedQueue
 
-/**
- *
- * @author Tomasz Tarczyński
- */
-internal class ConcurrentQueueScenarioStatistics(override val startTime: Instant) : ScenarioStatistics {
+internal class ConcurrentQueueScenarioStatistics(private val startTime : Instant) : ScenarioStatistics {
     private val scenarioStats = ConcurrentLinkedQueue<Statistics>()
+    private var finished = false
 
-    override lateinit var endTime: Instant
-
-    override fun getSummary(): ScenarioSummary {
-        return ScenarioSummary(scenarioStats, startTime, endTime)
+    override fun finish() : ScenarioSummary {
+        finished = true
+        return ScenarioSummary(scenarioStats, startTime, Instant.now())
     }
 
-    override fun gather(statistics: Statistics) {
+    override fun gather(statistics : Statistics) {
+        check(!finished) { "Scenario already finished" }
         this.scenarioStats.add(statistics)
     }
-
 }
