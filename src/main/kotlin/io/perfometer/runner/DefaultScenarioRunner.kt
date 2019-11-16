@@ -13,7 +13,9 @@ import io.perfometer.statistics.printer.StatisticsPrinter
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 internal class DefaultScenarioRunner(private val httpClient : HttpClient,
                                      private val statisticsPrinter : StatisticsPrinter) : ScenarioRunner {
@@ -32,7 +34,15 @@ internal class DefaultScenarioRunner(private val httpClient : HttpClient,
                         .toTypedArray())
                 .thenRun { statisticsPrinter.print(scenarioStatistics.finish()) }
                 .join()
+        shutdown(scenarioExecutor)
+    }
+
+    private fun shutdown(scenarioExecutor: ExecutorService) {
         scenarioExecutor.shutdown()
+        val isTerminated = scenarioExecutor.awaitTermination(10, TimeUnit.SECONDS)
+        if (!isTerminated) {
+            scenarioExecutor.shutdownNow()
+        }
     }
 
     private fun handleSteps(steps : List<Step>) = steps.forEach {
