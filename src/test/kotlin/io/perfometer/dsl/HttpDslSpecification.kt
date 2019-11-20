@@ -6,6 +6,7 @@ import io.perfometer.http.HttpMethod
 import io.perfometer.http.PauseStep
 import io.perfometer.http.RequestStep
 import java.time.Duration
+import java.util.*
 import kotlin.test.Test
 
 @Suppress("FunctionName")
@@ -91,4 +92,25 @@ internal class HttpDslSpecification {
             else         -> fail("Expected PauseStep")
         }
     }
+
+    @Test
+    fun `all request should contain basic auth header`() {
+        val user = "user"
+        val password = "password"
+        val credentialsEncoded = Base64.getEncoder().encodeToString("$user:$password".toByteArray())
+
+        val securedScenario = scenario("http", "perfometer.io", 80) {
+            basicAuth(user, password)
+            get().path { "/" }
+            get().path { "/" }
+            post().path { "/post-path" }
+        }
+
+        val securedRequestsCount = securedScenario.steps.filterIsInstance<RequestStep>()
+                .mapNotNull { it.request.authorization }
+                .filter { authHeader -> authHeader.first == "Authorization" && authHeader.second == "Basic $credentialsEncoded" }
+                .count()
+        securedRequestsCount shouldBe securedScenario.steps.size
+    }
+
 }

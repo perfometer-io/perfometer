@@ -16,7 +16,7 @@ class SimpleHttpClient(private val trustAllCertificates: Boolean) : HttpClient {
                 response.body = it.readText()
             }
         } catch (ignored: Exception) {
-            // NOOP for now
+            ignored.printStackTrace()
         } finally {
             connection?.disconnect()
             val httpStatus = HttpStatus(connection?.responseCode ?: -1)
@@ -33,6 +33,7 @@ class SimpleHttpClient(private val trustAllCertificates: Boolean) : HttpClient {
             method(request.method.name)
             headers(request.headers())
             body(request.body())
+            authorization(request.authorization)
         }
     }
 }

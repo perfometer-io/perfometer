@@ -2,6 +2,7 @@ package io.perfometer.dsl
 
 import io.perfometer.http.*
 import java.time.Duration
+import java.util.*
 
 typealias HttpHeader = Pair<String, String>
 typealias HttpParam = Pair<String, String>
@@ -9,7 +10,8 @@ typealias HttpParam = Pair<String, String>
 class RequestBuilder(val protocol : String,
                      val host : String,
                      val port : Int,
-                     val method : HttpMethod) {
+                     val method : HttpMethod,
+                     val authorization : HttpHeader?) {
     private var path : () -> String = { "" }
     private val headers : MutableList<() -> HttpHeader> = mutableListOf()
     private val params : MutableList<() -> HttpParam> = mutableListOf()
@@ -59,17 +61,24 @@ class HttpDsl(private val protocol : String,
               private val port : Int) {
     private val steps : MutableList<Step> = mutableListOf()
 
-    private fun request(httpMethod : HttpMethod) : RequestBuilder {
-        val request = RequestBuilder(protocol, host, port, httpMethod)
+    private var authorizationHeader : HttpHeader? = null
+
+    private fun request(httpMethod : HttpMethod, authorization: HttpHeader?) : RequestBuilder {
+        val request = RequestBuilder(protocol, host, port, httpMethod, authorization)
         steps.add(RequestStep(request, request.response))
         return request
     }
 
-    fun get() = request(HttpMethod.GET)
-    fun post() = request(HttpMethod.POST)
-    fun put() = request(HttpMethod.PUT)
-    fun delete() = request(HttpMethod.DELETE)
-    fun patch() = request(HttpMethod.PATCH)
+    fun get() = request(HttpMethod.GET, authorizationHeader)
+    fun post() = request(HttpMethod.POST, authorizationHeader)
+    fun put() = request(HttpMethod.PUT, authorizationHeader)
+    fun delete() = request(HttpMethod.DELETE, authorizationHeader)
+    fun patch() = request(HttpMethod.PATCH, authorizationHeader)
+
+    fun basicAuth(user: String, password: String) {
+        val credentialsEncoded = Base64.getEncoder().encodeToString("$user:$password".toByteArray())
+        this.authorizationHeader = HttpHeader("Authorization", "Basic $credentialsEncoded")
+    }
 
     fun pause(duration : Duration) {
         steps.add(PauseStep(duration))
