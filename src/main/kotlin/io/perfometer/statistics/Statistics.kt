@@ -13,40 +13,46 @@ import java.util.*
  */
 internal sealed class Statistics
 
-internal data class RequestStatistics(val method: HttpMethod,
-                                      val pathWithParams: String,
-                                      val timeTaken : Duration,
-                                      val httpStatus : HttpStatus) : Statistics()
+internal data class RequestStatistics(
+        val method: HttpMethod,
+        val pathWithParams: String,
+        val timeTaken: Duration,
+        val httpStatus: HttpStatus,
+) : Statistics()
 
-internal data class PauseStatistics(val duration : Duration) : Statistics()
+internal data class PauseStatistics(
+        val duration: Duration,
+) : Statistics()
 
-internal class ScenarioSummary(statistics : Collection<Statistics>,
-                               private val startTime : Instant,
-                               private val endTime : Instant) {
+internal class ScenarioSummary(
+        statistics: Collection<Statistics>,
+        private val startTime: Instant,
+        private val endTime: Instant,
+) {
     private val _statistics = statistics
 
-    val statistics : Collection<Statistics>
+    val statistics: Collection<Statistics>
         get() = Collections.unmodifiableCollection(_statistics)
 
     fun hasRequests() = statistics.any { it is RequestStatistics }
 
-    val slowestRequest : RequestStatistics?
+    val slowestRequest: RequestStatistics?
         get() = this.statistics
                 .filterIsInstance<RequestStatistics>()
-                .maxBy { it.timeTaken }
+                .maxByOrNull { it.timeTaken }
 
-    val fastestRequest : RequestStatistics?
+    val fastestRequest: RequestStatistics?
         get() = this.statistics
                 .filterIsInstance<RequestStatistics>()
-                .minBy { it.timeTaken }
+                .minByOrNull { it.timeTaken }
 
-    val meanAverageRequestTime : Duration
+    val meanAverageRequestTime: Duration
         get() = this.statistics
                 .filterIsInstance<RequestStatistics>()
                 .map { it.timeTaken.toMillis() }
                 .average()
                 .let { Duration.ofMillis(it.toLong()) }
 
-    val scenarioTime : Duration
+    val scenarioTime: Duration
         get() = Duration.between(startTime, endTime)
 }

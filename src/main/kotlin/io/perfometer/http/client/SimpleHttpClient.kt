@@ -5,7 +5,9 @@ import io.perfometer.http.HttpResponse
 import io.perfometer.http.HttpStatus
 import java.net.HttpURLConnection
 
-class SimpleHttpClient(private val trustAllCertificates: Boolean) : HttpClient {
+class SimpleHttpClient(
+        private val trustAllCertificates: Boolean,
+) : HttpClient {
 
     override fun executeHttp(request: RequestBuilder, response: HttpResponse): HttpStatus {
         var connection: HttpURLConnection? = null

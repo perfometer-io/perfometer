@@ -8,7 +8,9 @@ enum class HttpMethod {
     PATCH,
 }
 
-data class HttpStatus(val code: Int) {
+data class HttpStatus(
+        val code: Int,
+) {
 
     val generalError: Boolean
         get() = code == -1

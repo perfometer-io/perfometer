@@ -17,16 +17,18 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-internal class DefaultScenarioRunner(private val httpClient : HttpClient,
-                                     private val statisticsPrinter : StatisticsPrinter) : ScenarioRunner {
-    private lateinit var scenarioStatistics : ScenarioStatistics
+internal class DefaultScenarioRunner(
+        private val httpClient: HttpClient,
+        private val statisticsPrinter: StatisticsPrinter,
+) : ScenarioRunner {
+    private lateinit var scenarioStatistics: ScenarioStatistics
 
-    override fun run(scenario : Scenario, configuration : RunnerConfiguration) {
+    override fun run(scenario: Scenario, configuration: RunnerConfiguration) {
         scenarioStatistics = ConcurrentQueueScenarioStatistics(Instant.now())
         runScenario(scenario, configuration)
     }
 
-    private fun runScenario(scenario : Scenario, configuration : RunnerConfiguration) {
+    private fun runScenario(scenario: Scenario, configuration: RunnerConfiguration) {
         val scenarioExecutor = Executors.newFixedThreadPool(configuration.threadCount)
         CompletableFuture.allOf(
                 *(0 until configuration.threadCount)
@@ -45,19 +47,19 @@ internal class DefaultScenarioRunner(private val httpClient : HttpClient,
         }
     }
 
-    private fun handleSteps(steps : List<Step>) = steps.forEach {
+    private fun handleSteps(steps: List<Step>) = steps.forEach {
         when (it) {
             is RequestStep -> executeHttp(it)
-            is PauseStep   -> pauseFor(it.duration)
+            is PauseStep -> pauseFor(it.duration)
         }
     }
 
-    private fun pauseFor(duration : Duration) {
+    private fun pauseFor(duration: Duration) {
         Thread.sleep(duration.toMillis())
         scenarioStatistics.gather(PauseStatistics(duration))
     }
 
-    private fun executeHttp(requestStep : RequestStep) {
+    private fun executeHttp(requestStep: RequestStep) {
         val startTime = Instant.now()
         val httpStatus = httpClient.executeHttp(requestStep.request, requestStep.response)
         requestStep.response.status = httpStatus

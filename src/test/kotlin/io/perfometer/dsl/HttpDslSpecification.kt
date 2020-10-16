@@ -27,7 +27,7 @@ internal class HttpDslSpecification {
                 step.request.host shouldBe "perfometer.io"
                 step.request.port shouldBe 443
             }
-            else           -> fail("Expected RequestStep")
+            else -> fail("Expected RequestStep")
         }
     }
 
@@ -49,7 +49,7 @@ internal class HttpDslSpecification {
                 step1.request.pathWithParams() shouldBe "/"
                 step1.request.headers() shouldBe mapOf("x-foo" to "bar")
             }
-            else           -> fail("Expected RequestStep")
+            else -> fail("Expected RequestStep")
         }
 
         when (val step2 = scenario.steps[1]) {
@@ -57,7 +57,7 @@ internal class HttpDslSpecification {
                 step2.request.method shouldBe HttpMethod.GET
                 step2.request.pathWithParams() shouldBe "/path?foo=bar&bar=baz"
             }
-            else           -> fail("Expected RequestStep")
+            else -> fail("Expected RequestStep")
         }
 
     }
@@ -89,7 +89,7 @@ internal class HttpDslSpecification {
             is PauseStep -> {
                 step.duration shouldBe expectedDuration
             }
-            else         -> fail("Expected PauseStep")
+            else -> fail("Expected PauseStep")
         }
     }
 

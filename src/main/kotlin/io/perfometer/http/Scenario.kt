@@ -6,8 +6,10 @@ import java.time.Duration
 /**
  * @author Piotr Wolny
  */
-data class Scenario(val steps: List<Step>)
+data class Scenario(
+        val steps: List<Step>,
+)
 
 sealed class Step
-data class RequestStep(val request: RequestBuilder, val response: HttpResponse): Step()
+data class RequestStep(val request: RequestBuilder, val response: HttpResponse) : Step()
 data class PauseStep(val duration: Duration) : Step()

@@ -19,7 +19,7 @@ class DefaultScenarioRunnerSpecification {
 
     private val httpClient = object : HttpClient {
         val requests = mutableListOf<RequestBuilder>()
-        override fun executeHttp(request : RequestBuilder, response : HttpResponse) : HttpStatus {
+        override fun executeHttp(request: RequestBuilder, response: HttpResponse): HttpStatus {
             synchronized(this) {
                 requests += request
             }
@@ -29,7 +29,7 @@ class DefaultScenarioRunnerSpecification {
 
     private val statsPrinter = object : StatisticsPrinter {
         var calls = 0
-        override fun print(scenarioSummary : ScenarioSummary) {
+        override fun print(scenarioSummary: ScenarioSummary) {
             calls++
         }
     }
@@ -57,7 +57,7 @@ class DefaultScenarioRunnerSpecification {
 
     @Test
     fun `should execute 8 requests total on two async jobs`() {
-        val scenario = scenario("http","perfomerter.io", 80) {
+        val scenario = scenario("http", "perfomerter.io", 80) {
             get().path { "/" }
             get().path { "/" }
             delete().path { "/delete" }

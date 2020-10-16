@@ -26,10 +26,12 @@ object TrustAllSslSocketFactoryProvider {
     }
 }
 
-internal class HttpConnectionBuilder(protocol: String,
-                                     host: String,
-                                     port: Int,
-                                     path: String) {
+internal class HttpConnectionBuilder(
+        protocol: String,
+        host: String,
+        port: Int,
+        path: String,
+) {
 
     val connection = URL("$protocol://$host:$port$path").openConnection() as HttpURLConnection
 
