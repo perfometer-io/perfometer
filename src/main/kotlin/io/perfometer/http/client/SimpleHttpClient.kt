@@ -1,33 +1,41 @@
 package io.perfometer.http.client
 
-import io.perfometer.http.HttpRequest
+import io.perfometer.dsl.RequestBuilder
+import io.perfometer.http.HttpResponse
 import io.perfometer.http.HttpStatus
 import java.net.HttpURLConnection
 
-class SimpleHttpClient(private val trustAllCertificates: Boolean) : HttpClient {
+class SimpleHttpClient(
+        private val trustAllCertificates: Boolean,
+) : HttpClient {
 
-    override fun executeHttp(request: HttpRequest): HttpStatus {
-        val connection = createHttpConnectionForRequest(request)
+    override fun executeHttp(request: RequestBuilder, response: HttpResponse): HttpStatus {
+        var connection: HttpURLConnection? = null
         try {
+            connection = createHttpConnectionForRequest(request)
             connection.connect()
-            connection.inputStream.bufferedReader().use { it.readText() }
+            connection.inputStream.bufferedReader().use {
+                response.body = it.readText()
+            }
         } catch (ignored: Exception) {
-            // NOOP for now
+            ignored.printStackTrace()
         } finally {
-            connection.disconnect()
-            return HttpStatus(connection.responseCode)
+            connection?.disconnect()
+            val httpStatus = HttpStatus(connection?.responseCode ?: -1)
+            response.status = httpStatus
+            return httpStatus
         }
     }
 
-    private fun createHttpConnectionForRequest(request: HttpRequest): HttpURLConnection {
-        return httpConnection("https", request.host, request.port, request.path) {
+    private fun createHttpConnectionForRequest(request: RequestBuilder): HttpURLConnection {
+        return httpConnection(request.protocol, request.host, request.port, request.pathWithParams()) {
             if (trustAllCertificates) {
                 trustAllCertificates()
             }
-            method(request.name)
-            headers(request.headers)
-            body(request.body)
+            method(request.method.name)
+            headers(request.headers())
+            body(request.body())
+            authorization(request.authorization)
         }
     }
-
 }

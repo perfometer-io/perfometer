@@ -1,6 +1,9 @@
 package io.perfometer.runner
 
-import io.perfometer.http.*
+import io.perfometer.http.PauseStep
+import io.perfometer.http.RequestStep
+import io.perfometer.http.Scenario
+import io.perfometer.http.Step
 import io.perfometer.http.client.HttpClient
 import io.perfometer.statistics.ConcurrentQueueScenarioStatistics
 import io.perfometer.statistics.PauseStatistics
@@ -10,12 +13,14 @@ import io.perfometer.statistics.printer.StatisticsPrinter
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
-/**
- * @author Tomasz Tarczyński
- */
-internal class DefaultScenarioRunner(private val httpClient: HttpClient,
-                                     private val statisticsPrinter: StatisticsPrinter) : ScenarioRunner {
+internal class DefaultScenarioRunner(
+        private val httpClient: HttpClient,
+        private val statisticsPrinter: StatisticsPrinter,
+) : ScenarioRunner {
     private lateinit var scenarioStatistics: ScenarioStatistics
 
     override fun run(scenario: Scenario, configuration: RunnerConfiguration) {
@@ -24,18 +29,27 @@ internal class DefaultScenarioRunner(private val httpClient: HttpClient,
     }
 
     private fun runScenario(scenario: Scenario, configuration: RunnerConfiguration) {
+        val scenarioExecutor = Executors.newFixedThreadPool(configuration.threadCount)
         CompletableFuture.allOf(
                 *(0 until configuration.threadCount)
-                        .map { CompletableFuture.runAsync { handleSteps(scenario.steps) } }
+                        .map { CompletableFuture.runAsync(Runnable { handleSteps(scenario.steps) }, scenarioExecutor) }
                         .toTypedArray())
-                .thenRun { scenarioStatistics.endTime = Instant.now() }
-                .thenRun { statisticsPrinter.print(scenarioStatistics.getSummary()) }
+                .thenRun { statisticsPrinter.print(scenarioStatistics.finish()) }
                 .join()
+        shutdown(scenarioExecutor)
+    }
+
+    private fun shutdown(scenarioExecutor: ExecutorService) {
+        scenarioExecutor.shutdown()
+        val isTerminated = scenarioExecutor.awaitTermination(10, TimeUnit.SECONDS)
+        if (!isTerminated) {
+            scenarioExecutor.shutdownNow()
+        }
     }
 
     private fun handleSteps(steps: List<Step>) = steps.forEach {
         when (it) {
-            is RequestStep -> executeHttp(it.request)
+            is RequestStep -> executeHttp(it)
             is PauseStep -> pauseFor(it.duration)
         }
     }
@@ -45,10 +59,16 @@ internal class DefaultScenarioRunner(private val httpClient: HttpClient,
         scenarioStatistics.gather(PauseStatistics(duration))
     }
 
-    private fun executeHttp(request: HttpRequest) {
+    private fun executeHttp(requestStep: RequestStep) {
         val startTime = Instant.now()
-        val httpStatus = httpClient.executeHttp(request)
+        val httpStatus = httpClient.executeHttp(requestStep.request, requestStep.response)
+        requestStep.response.status = httpStatus
         val timeElapsed = Duration.between(startTime, Instant.now())
-        scenarioStatistics.gather(RequestStatistics(request, timeElapsed, httpStatus))
+        scenarioStatistics.gather(RequestStatistics(
+                requestStep.request.method,
+                requestStep.request.pathWithParams(),
+                timeElapsed,
+                httpStatus)
+        )
     }
 }

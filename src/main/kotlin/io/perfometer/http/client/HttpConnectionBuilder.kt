@@ -1,5 +1,6 @@
 package io.perfometer.http.client
 
+import io.perfometer.dsl.HttpHeader
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
@@ -25,10 +26,12 @@ object TrustAllSslSocketFactoryProvider {
     }
 }
 
-internal class HttpConnectionBuilder(protocol: String,
-                                     host: String,
-                                     port: Int,
-                                     path: String) {
+internal class HttpConnectionBuilder(
+        protocol: String,
+        host: String,
+        port: Int,
+        path: String,
+) {
 
     val connection = URL("$protocol://$host:$port$path").openConnection() as HttpURLConnection
 
@@ -52,6 +55,12 @@ internal class HttpConnectionBuilder(protocol: String,
             val osw = OutputStreamWriter(this.connection.outputStream, Charset.forName("UTF-8"))
             osw.write(String(body, Charset.forName("UTF-8")))
             osw.flush()
+        }
+    }
+
+    fun authorization(header: HttpHeader?) {
+        if (header != null) {
+            this.connection.setRequestProperty(header.first, header.second)
         }
     }
 }

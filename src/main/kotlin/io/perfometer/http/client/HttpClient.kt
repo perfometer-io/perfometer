@@ -1,10 +1,10 @@
 package io.perfometer.http.client
 
-import io.perfometer.http.HttpRequest
+import io.perfometer.dsl.RequestBuilder
+import io.perfometer.http.HttpResponse
 import io.perfometer.http.HttpStatus
-import java.net.HttpURLConnection
 
 interface HttpClient {
 
-    fun executeHttp(request: HttpRequest): HttpStatus
+    fun executeHttp(request: RequestBuilder, response: HttpResponse): HttpStatus
 }

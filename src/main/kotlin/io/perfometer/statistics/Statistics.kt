@@ -1,9 +1,10 @@
 package io.perfometer.statistics
 
-import io.perfometer.http.HttpRequest
+import io.perfometer.http.HttpMethod
 import io.perfometer.http.HttpStatus
 import java.time.Duration
 import java.time.Instant
+import java.util.*
 
 /**
  * Set of data classes representing different statistics collected during scenario life cycle.
@@ -12,34 +13,42 @@ import java.time.Instant
  */
 internal sealed class Statistics
 
-internal data class RequestStatistics(val request: HttpRequest,
-                                      val timeTaken: Duration,
-                                      val httpStatus: HttpStatus) : Statistics()
+internal data class RequestStatistics(
+        val method: HttpMethod,
+        val pathWithParams: String,
+        val timeTaken: Duration,
+        val httpStatus: HttpStatus,
+) : Statistics()
 
-internal data class PauseStatistics(val duration: Duration) : Statistics()
+internal data class PauseStatistics(
+        val duration: Duration,
+) : Statistics()
 
-internal data class ScenarioSummary(val statistics: Collection<Statistics>,
-                                    private val startTime: Instant,
-                                    private val endTime: Instant) {
+internal class ScenarioSummary(
+        statistics: Collection<Statistics>,
+        private val startTime: Instant,
+        private val endTime: Instant,
+) {
+    private val _statistics = statistics
+
+    val statistics: Collection<Statistics>
+        get() = Collections.unmodifiableCollection(_statistics)
 
     fun hasRequests() = statistics.any { it is RequestStatistics }
 
     val slowestRequest: RequestStatistics?
         get() = this.statistics
-                .filter { it is RequestStatistics }
-                .map { it as RequestStatistics }
-                .maxBy { it.timeTaken }
+                .filterIsInstance<RequestStatistics>()
+                .maxByOrNull { it.timeTaken }
 
     val fastestRequest: RequestStatistics?
         get() = this.statistics
-                .filter { it is RequestStatistics }
-                .map { it as RequestStatistics }
-                .minBy { it.timeTaken }
+                .filterIsInstance<RequestStatistics>()
+                .minByOrNull { it.timeTaken }
 
     val meanAverageRequestTime: Duration
         get() = this.statistics
-                .filter { it is RequestStatistics }
-                .map { it as RequestStatistics }
+                .filterIsInstance<RequestStatistics>()
                 .map { it.timeTaken.toMillis() }
                 .average()
                 .let { Duration.ofMillis(it.toLong()) }

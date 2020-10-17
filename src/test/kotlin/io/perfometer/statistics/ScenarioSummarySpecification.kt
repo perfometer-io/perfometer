@@ -1,7 +1,7 @@
 package io.perfometer.statistics
 
 import io.kotlintest.shouldBe
-import io.perfometer.http.Get
+import io.perfometer.http.HttpMethod
 import io.perfometer.http.HttpStatus
 import java.time.Duration
 import java.time.Instant
@@ -11,14 +11,13 @@ class ScenarioSummarySpecification {
     private val start = Instant.MIN
     private val end = Instant.MAX
 
-    private val get = Get("perfometer.io", 443, "/")
     private val ok = HttpStatus(200)
 
     @Test
     fun `should return the slowest request`() {
-        val fastest = RequestStatistics(get, Duration.ofSeconds(1), ok)
-        val slowest = RequestStatistics(get, Duration.ofSeconds(3), ok)
-        val average = RequestStatistics(get, Duration.ofSeconds(2), ok)
+        val fastest = RequestStatistics(HttpMethod.GET, "", Duration.ofSeconds(1), ok)
+        val slowest = RequestStatistics(HttpMethod.GET, "", Duration.ofSeconds(3), ok)
+        val average = RequestStatistics(HttpMethod.GET, "", Duration.ofSeconds(2), ok)
         val stats = setOf(fastest, slowest, average)
 
         ScenarioSummary(stats, start, end).slowestRequest shouldBe slowest
@@ -26,9 +25,9 @@ class ScenarioSummarySpecification {
 
     @Test
     fun `should return the fastest request`() {
-        val fastest = RequestStatistics(get, Duration.ofSeconds(1), ok)
-        val slowest = RequestStatistics(get, Duration.ofSeconds(3), ok)
-        val average = RequestStatistics(get, Duration.ofSeconds(2), ok)
+        val fastest = RequestStatistics(HttpMethod.GET, "", Duration.ofSeconds(1), ok)
+        val slowest = RequestStatistics(HttpMethod.GET, "", Duration.ofSeconds(3), ok)
+        val average = RequestStatistics(HttpMethod.GET, "", Duration.ofSeconds(2), ok)
 
         val stats = setOf(fastest, slowest, average)
         ScenarioSummary(stats, start, end).fastestRequest shouldBe fastest
@@ -37,17 +36,17 @@ class ScenarioSummarySpecification {
     @Test
     fun `should return mean average request time`() {
         // given three request taking 1500 ms
-        val fastest = RequestStatistics(get, Duration.ofMillis(100), ok)
-        val slowest = RequestStatistics(get, Duration.ofMillis(1000), ok)
-        val somewhereInBetween = RequestStatistics(get, Duration.ofMillis(400), ok)
+        val fastest = RequestStatistics(HttpMethod.GET, "", Duration.ofMillis(100), ok)
+        val slowest = RequestStatistics(HttpMethod.GET, "", Duration.ofMillis(1000), ok)
+        val somewhereInBetween = RequestStatistics(HttpMethod.GET, "", Duration.ofMillis(400), ok)
 
         val stats = setOf(fastest, slowest, somewhereInBetween)
         ScenarioSummary(stats, start, end).meanAverageRequestTime shouldBe Duration.ofMillis(500)
 
         // given three requests summing up to one second
-        val hundred = RequestStatistics(get, Duration.ofMillis(100), ok)
-        val fiveHundred = RequestStatistics(get, Duration.ofMillis(500), ok)
-        val fourHundred = RequestStatistics(get, Duration.ofMillis(400), ok)
+        val hundred = RequestStatistics(HttpMethod.GET, "", Duration.ofMillis(100), ok)
+        val fiveHundred = RequestStatistics(HttpMethod.GET, "", Duration.ofMillis(500), ok)
+        val fourHundred = RequestStatistics(HttpMethod.GET, "", Duration.ofMillis(400), ok)
 
         val oneSecondStats = setOf(hundred, fiveHundred, fourHundred)
 
@@ -62,7 +61,9 @@ class ScenarioSummarySpecification {
 
     @Test
     fun `should return scenario running time`() {
-        val summary = ScenarioSummary(setOf(RequestStatistics(get, Duration.ofMillis(100), ok)), start, end)
+        val summary = ScenarioSummary(setOf(RequestStatistics(HttpMethod.GET, "", Duration.ofMillis(100), ok)),
+                start,
+                end)
         summary.scenarioTime shouldBe Duration.between(start, end)
     }
 
@@ -77,7 +78,7 @@ class ScenarioSummarySpecification {
 
     @Test
     fun `should return true if at least on request stat is present`() {
-        ScenarioSummary(setOf(RequestStatistics(get, Duration.ZERO, ok)), start, end)
+        ScenarioSummary(setOf(RequestStatistics(HttpMethod.GET, "", Duration.ZERO, ok)), start, end)
                 .hasRequests() shouldBe true
     }
 }

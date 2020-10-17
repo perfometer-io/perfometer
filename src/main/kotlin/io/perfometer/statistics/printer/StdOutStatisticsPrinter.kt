@@ -11,14 +11,12 @@ internal class StdOutStatisticsPrinter : StatisticsPrinter {
         } else {
             val fastest = scenarioSummary.fastestRequest!!
             val slowest = scenarioSummary.slowestRequest!!
-            println("Scenario Duration: %s\nFastest request time: %s, %d, %s\nSlowest request: %s, %d, %s"
+            println("Scenario Duration: %s\nFastest request time: %s, %d\nSlowest request: %s, %d"
                     .format(formatDuration(scenarioSummary.scenarioTime),
                             formatDuration(fastest.timeTaken),
                             fastest.httpStatus.code,
-                            fastest.request.path,
                             formatDuration(slowest.timeTaken),
-                            slowest.httpStatus.code,
-                            slowest.request.path))
+                            slowest.httpStatus.code))
         }
     }
 
