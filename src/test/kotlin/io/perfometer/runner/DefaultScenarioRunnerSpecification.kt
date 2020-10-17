@@ -1,9 +1,10 @@
 package io.perfometer.runner
 
-import io.kotlintest.matchers.numerics.shouldBeGreaterThanOrEqual
-import io.kotlintest.shouldBe
+import io.kotest.matchers.comparables.shouldBeGreaterThanOrEqualTo
+import io.kotest.matchers.shouldBe
 import io.perfometer.dsl.RequestBuilder
 import io.perfometer.dsl.scenario
+import io.perfometer.http.HttpMethod
 import io.perfometer.http.HttpResponse
 import io.perfometer.http.HttpStatus
 import io.perfometer.http.RequestStep
@@ -19,11 +20,11 @@ class DefaultScenarioRunnerSpecification {
 
     private val httpClient = object : HttpClient {
         val requests = mutableListOf<RequestBuilder>()
-        override fun executeHttp(request: RequestBuilder, response: HttpResponse): HttpStatus {
+        override fun executeHttp(request: RequestBuilder): HttpResponse {
             synchronized(this) {
                 requests += request
             }
-            return HttpStatus(200)
+            return HttpResponse(HttpStatus(200))
         }
     }
 
@@ -43,21 +44,23 @@ class DefaultScenarioRunnerSpecification {
 
     @Test
     fun `should execute single GET request on a single thread`() {
-        val scenario = scenario("https", "perfomerter.io", 443) {
+        val scenario = scenario("https", "perfometer.io", 443) {
             get().path { "/" }
         }
 
-        val expectedRequest = (scenario.steps.first() as RequestStep).request
-
         runner.run(scenario, RunnerConfiguration(threadCount = 1))
         httpClient.requests.size shouldBe 1
-        httpClient.requests.contains(expectedRequest)
+        httpClient.requests[0].protocol shouldBe "https"
+        httpClient.requests[0].host shouldBe "perfometer.io"
+        httpClient.requests[0].port shouldBe 443
+        httpClient.requests[0].method shouldBe HttpMethod.GET
+        httpClient.requests[0].pathWithParams() shouldBe "/"
         statsPrinter.calls shouldBe 1
     }
 
     @Test
     fun `should execute 8 requests total on two async jobs`() {
-        val scenario = scenario("http", "perfomerter.io", 80) {
+        val scenario = scenario("http", "perfometer.io", 80) {
             get().path { "/" }
             get().path { "/" }
             delete().path { "/delete" }
@@ -78,7 +81,7 @@ class DefaultScenarioRunnerSpecification {
         val startTime = System.currentTimeMillis()
         runner.run(scenario, RunnerConfiguration(threadCount = 1))
         val diff = System.currentTimeMillis() - startTime
-        diff shouldBeGreaterThanOrEqual 2000L
+        diff shouldBeGreaterThanOrEqualTo 2000L
         statsPrinter.calls shouldBe 1
     }
 }

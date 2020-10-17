@@ -8,15 +8,13 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
 
     testImplementation(kotlin("test-junit"))
-    testImplementation("io.kotlintest:kotlintest-runner-junit5:3.3.0")
+    testImplementation("io.kotest:kotest-runner-junit5:4.3.0")
+    testImplementation("io.ktor:ktor-server-core:1.4.0")
+    testImplementation("io.ktor:ktor-server-netty:1.4.0")
 }
 
 repositories {
     mavenCentral()
-}
-
-val test by tasks.getting(Test::class) {
-    useJUnitPlatform { }
 }
 
 val compileKotlin: KotlinCompile by tasks
