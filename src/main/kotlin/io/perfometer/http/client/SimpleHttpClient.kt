@@ -35,7 +35,6 @@ class SimpleHttpClient(
             method(request.method.name)
             headers(request.headers())
             body(request.body())
-            authorization(request.authorization)
         }
     }
 }
