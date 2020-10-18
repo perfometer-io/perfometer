@@ -1,7 +1,7 @@
 package io.perfometer.dsl
 
-import io.kotlintest.fail
-import io.kotlintest.shouldBe
+import io.kotest.assertions.fail
+import io.kotest.matchers.shouldBe
 import io.perfometer.http.HttpMethod
 import io.perfometer.http.PauseStep
 import io.perfometer.http.RequestStep
@@ -17,7 +17,7 @@ internal class HttpDslSpecification {
 
         val scenario = scenario("https", "perfometer.io", 443) {
             get().path { "/" }
-        }
+        }.build()
 
         scenario.steps.size shouldBe 1
         when (val step = scenario.steps.first()) {
@@ -41,7 +41,7 @@ internal class HttpDslSpecification {
             get().path { "/path" }
                     .param { HttpParam("foo", "bar") }
                     .param { HttpParam("bar", "baz") }
-        }
+        }.build()
 
         scenario.steps.size shouldBe 2
         when (val step1 = scenario.steps[0]) {
@@ -69,7 +69,7 @@ internal class HttpDslSpecification {
         val scenario = scenario("https", "perfometer.io", 443) {
             post().path { "/" }
                     .body { expectedBody }
-        }
+        }.build()
 
         scenario.steps.size shouldBe 1
         val step = scenario.steps.first() as RequestStep
@@ -82,7 +82,7 @@ internal class HttpDslSpecification {
         val expectedDuration = Duration.ofMillis(2000)
         val scenario = scenario("https", "perfometer.io", 443) {
             pause(expectedDuration)
-        }
+        }.build()
 
         scenario.steps.size shouldBe 1
         when (val step = scenario.steps.first()) {
@@ -104,7 +104,7 @@ internal class HttpDslSpecification {
             get().path { "/" }
             get().path { "/" }
             post().path { "/post-path" }
-        }
+        }.build()
 
         val securedRequestsCount = securedScenario.steps.filterIsInstance<RequestStep>()
                 .mapNotNull { it.request.authorization }

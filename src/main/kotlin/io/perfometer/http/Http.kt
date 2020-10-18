@@ -36,7 +36,7 @@ data class HttpStatus(
     private fun isCodeIn(range: IntRange) = code in range
 }
 
-class HttpResponse(var status: HttpStatus? = null, var body: String = "") {
+class HttpResponse(val status: HttpStatus, val body: String? = null) {
 
     fun jsonPath(s: String): String {
         TODO()

@@ -1,6 +1,6 @@
 package io.perfometer.http
 
-import io.kotlintest.shouldBe
+import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
 @Suppress("FunctionName")

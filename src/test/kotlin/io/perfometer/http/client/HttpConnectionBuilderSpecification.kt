@@ -1,6 +1,6 @@
 package io.perfometer.http.client
 
-import io.kotlintest.shouldBe
+import io.kotest.matchers.shouldBe
 import java.net.URL
 import kotlin.test.Test
 

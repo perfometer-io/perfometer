@@ -1,8 +1,8 @@
 package io.perfometer.runner
 
-import io.perfometer.http.Scenario
+import io.perfometer.dsl.ScenarioBuilder
 
 internal interface ScenarioRunner {
 
-    fun run(scenario: Scenario, configuration: RunnerConfiguration = RunnerConfiguration())
+    fun run(scenario: ScenarioBuilder, configuration: RunnerConfiguration = RunnerConfiguration())
 }

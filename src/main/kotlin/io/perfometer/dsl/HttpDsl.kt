@@ -18,8 +18,11 @@ class RequestBuilder(
     private val headers: MutableList<() -> HttpHeader> = mutableListOf()
     private val params: MutableList<() -> HttpParam> = mutableListOf()
 
-    val response = HttpResponse()
     var body: () -> ByteArray = { ByteArray(0) }
+        private set
+
+    var consumer: (HttpResponse) -> Unit = {}
+        private set
 
     fun path(path: () -> String): RequestBuilder {
         this.path = path
@@ -38,6 +41,11 @@ class RequestBuilder(
 
     fun param(param: () -> HttpParam): RequestBuilder {
         params.add(param)
+        return this
+    }
+
+    fun consume(consumer: (HttpResponse) -> Unit): RequestBuilder {
+        this.consumer = consumer
         return this
     }
 
@@ -64,12 +72,13 @@ class HttpDsl(
         private val port: Int,
 ) {
     private val steps: MutableList<Step> = mutableListOf()
+    val scenarioSteps: List<Step> = steps
 
     private var authorizationHeader: HttpHeader? = null
 
     private fun request(httpMethod: HttpMethod, authorization: HttpHeader?): RequestBuilder {
         val request = RequestBuilder(protocol, host, port, httpMethod, authorization)
-        steps.add(RequestStep(request, request.response))
+        steps.add(RequestStep(request))
         return request
     }
 
@@ -87,11 +96,20 @@ class HttpDsl(
     fun pause(duration: Duration) {
         steps.add(PauseStep(duration))
     }
+}
 
-    fun build() = Scenario(steps)
+class ScenarioBuilder(
+        private val protocol: String,
+        private val host: String,
+        private val port: Int,
+        private val builder: HttpDsl.() -> Unit,
+) {
+    fun build(): Scenario {
+        return Scenario(HttpDsl(protocol, host, port).apply(builder).scenarioSteps)
+    }
 }
 
 fun scenario(protocol: String,
              host: String,
              port: Int,
-             builder: HttpDsl.() -> Unit): Scenario = HttpDsl(protocol, host, port).apply(builder).build()
+             builder: HttpDsl.() -> Unit): ScenarioBuilder = ScenarioBuilder(protocol, host, port, builder)

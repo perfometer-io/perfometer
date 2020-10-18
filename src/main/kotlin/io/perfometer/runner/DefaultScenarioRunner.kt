@@ -1,8 +1,8 @@
 package io.perfometer.runner
 
+import io.perfometer.dsl.ScenarioBuilder
 import io.perfometer.http.PauseStep
 import io.perfometer.http.RequestStep
-import io.perfometer.http.Scenario
 import io.perfometer.http.Step
 import io.perfometer.http.client.HttpClient
 import io.perfometer.statistics.ConcurrentQueueScenarioStatistics
@@ -23,16 +23,16 @@ internal class DefaultScenarioRunner(
 ) : ScenarioRunner {
     private lateinit var scenarioStatistics: ScenarioStatistics
 
-    override fun run(scenario: Scenario, configuration: RunnerConfiguration) {
+    override fun run(scenario: ScenarioBuilder, configuration: RunnerConfiguration) {
         scenarioStatistics = ConcurrentQueueScenarioStatistics(Instant.now())
         runScenario(scenario, configuration)
     }
 
-    private fun runScenario(scenario: Scenario, configuration: RunnerConfiguration) {
+    private fun runScenario(scenario: ScenarioBuilder, configuration: RunnerConfiguration) {
         val scenarioExecutor = Executors.newFixedThreadPool(configuration.threadCount)
         CompletableFuture.allOf(
                 *(0 until configuration.threadCount)
-                        .map { CompletableFuture.runAsync(Runnable { handleSteps(scenario.steps) }, scenarioExecutor) }
+                        .map { CompletableFuture.runAsync(Runnable { handleSteps(scenario.build().steps) }, scenarioExecutor) }
                         .toTypedArray())
                 .thenRun { statisticsPrinter.print(scenarioStatistics.finish()) }
                 .join()
@@ -61,14 +61,15 @@ internal class DefaultScenarioRunner(
 
     private fun executeHttp(requestStep: RequestStep) {
         val startTime = Instant.now()
-        val httpStatus = httpClient.executeHttp(requestStep.request, requestStep.response)
-        requestStep.response.status = httpStatus
+        val request = requestStep.request
+        val response = httpClient.executeHttp(request)
         val timeElapsed = Duration.between(startTime, Instant.now())
+        request.consumer(response)
         scenarioStatistics.gather(RequestStatistics(
-                requestStep.request.method,
-                requestStep.request.pathWithParams(),
+                request.method,
+                request.pathWithParams(),
                 timeElapsed,
-                httpStatus)
+                response.status)
         )
     }
 }

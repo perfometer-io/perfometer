@@ -1,6 +1,6 @@
 package io.perfometer.statistics
 
-import io.kotlintest.shouldBe
+import io.kotest.matchers.shouldBe
 import io.perfometer.http.HttpMethod
 import io.perfometer.http.HttpStatus
 import java.time.Duration
