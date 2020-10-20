@@ -1,21 +1,13 @@
 package io.perfometer.runner
 
 import io.perfometer.dsl.ScenarioBuilder
-import io.perfometer.http.PauseStep
-import io.perfometer.http.RequestStep
-import io.perfometer.http.Step
+import io.perfometer.http.*
 import io.perfometer.http.client.HttpClient
-import io.perfometer.statistics.ConcurrentQueueScenarioStatistics
-import io.perfometer.statistics.PauseStatistics
-import io.perfometer.statistics.RequestStatistics
-import io.perfometer.statistics.ScenarioStatistics
+import io.perfometer.statistics.*
 import io.perfometer.statistics.printer.StatisticsPrinter
 import java.time.Duration
 import java.time.Instant
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
 
 internal class DefaultScenarioRunner(
         private val httpClient: HttpClient,
@@ -32,7 +24,7 @@ internal class DefaultScenarioRunner(
         val scenarioExecutor = Executors.newFixedThreadPool(configuration.threads)
         CompletableFuture.allOf(
                 *(0 until configuration.threads)
-                        .map { CompletableFuture.runAsync(Runnable { handleSteps(scenario.build().steps) }, scenarioExecutor) }
+                        .map { CompletableFuture.runAsync({ handleSteps(scenario.build().steps) }, scenarioExecutor) }
                         .toTypedArray())
                 .thenRun { statisticsPrinter.print(scenarioStatistics.finish()) }
                 .join()
