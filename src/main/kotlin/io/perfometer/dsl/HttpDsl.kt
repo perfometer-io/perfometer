@@ -117,3 +117,9 @@ fun scenario(protocol: String,
              host: String,
              port: Int,
              builder: HttpDsl.() -> Unit): ScenarioBuilder = ScenarioBuilder(protocol, host, port, builder)
+
+fun scenario(httpConfig: HttpConfig,
+             builder: HttpDsl.() -> Unit): ScenarioBuilder {
+    val (protocol, host, port) = httpConfig
+    return ScenarioBuilder(protocol, host, port, builder)
+}

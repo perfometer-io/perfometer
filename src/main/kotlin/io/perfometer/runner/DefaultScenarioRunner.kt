@@ -29,9 +29,9 @@ internal class DefaultScenarioRunner(
     }
 
     private fun runScenario(scenario: ScenarioBuilder, configuration: RunnerConfiguration) {
-        val scenarioExecutor = Executors.newFixedThreadPool(configuration.threadCount)
+        val scenarioExecutor = Executors.newFixedThreadPool(configuration.threads)
         CompletableFuture.allOf(
-                *(0 until configuration.threadCount)
+                *(0 until configuration.threads)
                         .map { CompletableFuture.runAsync(Runnable { handleSteps(scenario.build().steps) }, scenarioExecutor) }
                         .toTypedArray())
                 .thenRun { statisticsPrinter.print(scenarioStatistics.finish()) }

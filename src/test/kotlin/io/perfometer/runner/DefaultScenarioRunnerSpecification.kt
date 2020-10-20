@@ -7,7 +7,6 @@ import io.perfometer.dsl.scenario
 import io.perfometer.http.HttpMethod
 import io.perfometer.http.HttpResponse
 import io.perfometer.http.HttpStatus
-import io.perfometer.http.RequestStep
 import io.perfometer.http.client.HttpClient
 import io.perfometer.statistics.ScenarioSummary
 import io.perfometer.statistics.printer.StatisticsPrinter
@@ -48,7 +47,7 @@ class DefaultScenarioRunnerSpecification {
             get().path { "/" }
         }
 
-        runner.run(scenario, RunnerConfiguration(threadCount = 1))
+        runner.run(scenario, RunnerConfiguration(threads = 1))
         httpClient.requests.size shouldBe 1
         httpClient.requests[0].protocol shouldBe "https"
         httpClient.requests[0].host shouldBe "perfometer.io"
@@ -79,7 +78,7 @@ class DefaultScenarioRunnerSpecification {
         }
 
         val startTime = System.currentTimeMillis()
-        runner.run(scenario, RunnerConfiguration(threadCount = 1))
+        runner.run(scenario, RunnerConfiguration(threads = 1))
         val diff = System.currentTimeMillis() - startTime
         diff shouldBeGreaterThanOrEqualTo 2000L
         statsPrinter.calls shouldBe 1
