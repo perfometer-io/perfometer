@@ -12,10 +12,10 @@ class RequestBuilder(
         val host: String,
         val port: Int,
         val method: HttpMethod,
-        val authorization: HttpHeader?,
+        initialHeaders: List<() -> HttpHeader>
 ) {
     private var path: () -> String = { "" }
-    private val headers: MutableList<() -> HttpHeader> = mutableListOf()
+    private val headers: MutableList<() -> HttpHeader> = initialHeaders.toMutableList()
     private val params: MutableList<() -> HttpParam> = mutableListOf()
 
     var body: () -> ByteArray = { ByteArray(0) }
@@ -74,23 +74,27 @@ class HttpDsl(
     private val steps: MutableList<Step> = mutableListOf()
     val scenarioSteps: List<Step> = steps
 
-    private var authorizationHeader: HttpHeader? = null
+    private val headers: MutableList<() -> HttpHeader> = mutableListOf()
 
-    private fun request(httpMethod: HttpMethod, authorization: HttpHeader?): RequestBuilder {
-        val request = RequestBuilder(protocol, host, port, httpMethod, authorization)
+    fun header(header: () -> HttpHeader) {
+        headers.add(header)
+    }
+
+    private fun request(httpMethod: HttpMethod): RequestBuilder {
+        val request = RequestBuilder(protocol, host, port, httpMethod, headers)
         steps.add(RequestStep(request))
         return request
     }
 
-    fun get() = request(HttpMethod.GET, authorizationHeader)
-    fun post() = request(HttpMethod.POST, authorizationHeader)
-    fun put() = request(HttpMethod.PUT, authorizationHeader)
-    fun delete() = request(HttpMethod.DELETE, authorizationHeader)
-    fun patch() = request(HttpMethod.PATCH, authorizationHeader)
+    fun get() = request(HttpMethod.GET)
+    fun post() = request(HttpMethod.POST)
+    fun put() = request(HttpMethod.PUT)
+    fun delete() = request(HttpMethod.DELETE)
+    fun patch() = request(HttpMethod.PATCH)
 
     fun basicAuth(user: String, password: String) {
         val credentialsEncoded = Base64.getEncoder().encodeToString("$user:$password".toByteArray())
-        this.authorizationHeader = HttpHeader("Authorization", "Basic $credentialsEncoded")
+        header { HttpHeaders.AUTHORIZATION to "Basic $credentialsEncoded" }
     }
 
     fun pause(duration: Duration) {

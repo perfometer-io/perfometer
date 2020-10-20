@@ -2,6 +2,7 @@ package io.perfometer.dsl
 
 import io.kotest.assertions.fail
 import io.kotest.matchers.shouldBe
+import io.perfometer.http.HttpHeaders
 import io.perfometer.http.HttpMethod
 import io.perfometer.http.PauseStep
 import io.perfometer.http.RequestStep
@@ -107,10 +108,28 @@ internal class HttpDslSpecification {
         }.build()
 
         val securedRequestsCount = securedScenario.steps.filterIsInstance<RequestStep>()
-                .mapNotNull { it.request.authorization }
-                .filter { authHeader -> authHeader.first == "Authorization" && authHeader.second == "Basic $credentialsEncoded" }
+                .flatMap { it.request.headers().entries }
+                .filter { header -> header.key == HttpHeaders.AUTHORIZATION  && header.value == "Basic $credentialsEncoded" }
                 .count()
         securedRequestsCount shouldBe securedScenario.steps.size
     }
 
+    @Test
+    fun `should add global header to all requests`() {
+        val name = "Header-Name"
+        val value = "example value"
+
+        val scenario = scenario("http", "perfometer.io", 80) {
+            header { name to value }
+            get().path { "/" }
+            get().path { "/" }
+            post().path { "/post-path" }
+        }.build()
+
+        val requestsCount = scenario.steps.filterIsInstance<RequestStep>()
+                .flatMap { it.request.headers().entries }
+                .filter { header -> header.key == name  && header.value == value }
+                .count()
+        requestsCount shouldBe scenario.steps.size
+    }
 }

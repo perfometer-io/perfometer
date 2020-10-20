@@ -36,6 +36,10 @@ data class HttpStatus(
     private fun isCodeIn(range: IntRange) = code in range
 }
 
+object HttpHeaders {
+    const val AUTHORIZATION = "Authorization"
+}
+
 class HttpResponse(val status: HttpStatus, val body: String? = null) {
 
     fun jsonPath(s: String): String {
