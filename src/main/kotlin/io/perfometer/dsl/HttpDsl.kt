@@ -3,7 +3,6 @@ package io.perfometer.dsl
 import io.perfometer.http.*
 import java.time.Duration
 import java.util.*
-import kotlin.collections.ArrayList
 
 typealias HttpHeader = Pair<String, String>
 typealias HttpParam = Pair<String, String>
@@ -16,7 +15,7 @@ class RequestBuilder(
         initialHeaders: List<() -> HttpHeader>
 ) {
     private var path: () -> String = { "" }
-    private val headers: MutableList<() -> HttpHeader> = ArrayList(initialHeaders)
+    private val headers: MutableList<() -> HttpHeader> = initialHeaders.toMutableList()
     private val params: MutableList<() -> HttpParam> = mutableListOf()
 
     var body: () -> ByteArray = { ByteArray(0) }
@@ -95,7 +94,7 @@ class HttpDsl(
 
     fun basicAuth(user: String, password: String) {
         val credentialsEncoded = Base64.getEncoder().encodeToString("$user:$password".toByteArray())
-        header { "Authorization" to "Basic $credentialsEncoded" }
+        header { HttpHeaders.AUTHORIZATION to "Basic $credentialsEncoded" }
     }
 
     fun pause(duration: Duration) {

@@ -2,6 +2,7 @@ package io.perfometer.dsl
 
 import io.kotest.assertions.fail
 import io.kotest.matchers.shouldBe
+import io.perfometer.http.HttpHeaders
 import io.perfometer.http.HttpMethod
 import io.perfometer.http.PauseStep
 import io.perfometer.http.RequestStep
@@ -108,7 +109,7 @@ internal class HttpDslSpecification {
 
         val securedRequestsCount = securedScenario.steps.filterIsInstance<RequestStep>()
                 .flatMap { it.request.headers().entries }
-                .filter { header -> header.key == "Authorization"  && header.value == "Basic $credentialsEncoded" }
+                .filter { header -> header.key == HttpHeaders.AUTHORIZATION  && header.value == "Basic $credentialsEncoded" }
                 .count()
         securedRequestsCount shouldBe securedScenario.steps.size
     }
