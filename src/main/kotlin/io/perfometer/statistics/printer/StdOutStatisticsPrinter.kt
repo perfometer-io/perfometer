@@ -9,8 +9,8 @@ internal class StdOutStatisticsPrinter : StatisticsPrinter {
         if (!scenarioSummary.hasRequests()) {
             println("No requests run!")
         } else {
-            val fastest = scenarioSummary.fastestRequest!!
-            val slowest = scenarioSummary.slowestRequest!!
+            val fastest = scenarioSummary.fastestRequest
+            val slowest = scenarioSummary.slowestRequest
             println("Scenario Duration: %s\nFastest request time: %s, %d\nSlowest request: %s, %d"
                     .format(formatDuration(scenarioSummary.scenarioTime),
                             formatDuration(fastest.timeTaken),

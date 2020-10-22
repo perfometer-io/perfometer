@@ -36,15 +36,17 @@ internal class ScenarioSummary(
 
     fun hasRequests() = statistics.any { it is RequestStatistics }
 
-    val slowestRequest: RequestStatistics?
+    val slowestRequest: RequestStatistics
         get() = this.statistics
                 .filterIsInstance<RequestStatistics>()
-                .maxByOrNull { it.timeTaken }
+                .sortedBy { it.timeTaken }
+                .last()
 
-    val fastestRequest: RequestStatistics?
+    val fastestRequest: RequestStatistics
         get() = this.statistics
                 .filterIsInstance<RequestStatistics>()
-                .minByOrNull { it.timeTaken }
+                .sortedBy { it.timeTaken }
+                .first()
 
     val meanAverageRequestTime: Duration
         get() = this.statistics

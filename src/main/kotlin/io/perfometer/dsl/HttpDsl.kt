@@ -1,6 +1,8 @@
 package io.perfometer.dsl
 
 import io.perfometer.http.*
+import io.perfometer.internal.helper.toUrl
+import java.net.URL
 import java.time.Duration
 import java.util.*
 
@@ -8,9 +10,7 @@ typealias HttpHeader = Pair<String, String>
 typealias HttpParam = Pair<String, String>
 
 class RequestBuilder(
-        val protocol: String,
-        val host: String,
-        val port: Int,
+        val url: URL,
         val method: HttpMethod,
         initialHeaders: List<() -> HttpHeader>
 ) {
@@ -67,9 +67,7 @@ class RequestBuilder(
 }
 
 class HttpDsl(
-        private val protocol: String,
-        private val host: String,
-        private val port: Int,
+        private val baseURL: URL,
 ) {
     private val steps: MutableList<Step> = mutableListOf()
     val scenarioSteps: List<Step> = steps
@@ -80,17 +78,18 @@ class HttpDsl(
         headers.add(header)
     }
 
-    private fun request(httpMethod: HttpMethod): RequestBuilder {
-        val request = RequestBuilder(protocol, host, port, httpMethod, headers)
+    private fun request(httpMethod: HttpMethod, urlString: String?): RequestBuilder {
+        val requestUrl = urlString?.toUrl() ?: baseURL
+        val request = RequestBuilder(requestUrl, httpMethod, headers)
         steps.add(RequestStep(request))
         return request
     }
 
-    fun get() = request(HttpMethod.GET)
-    fun post() = request(HttpMethod.POST)
-    fun put() = request(HttpMethod.PUT)
-    fun delete() = request(HttpMethod.DELETE)
-    fun patch() = request(HttpMethod.PATCH)
+    fun get(urlString: String? = null) = request(HttpMethod.GET, urlString)
+    fun post(urlString: String? = null) = request(HttpMethod.POST, urlString)
+    fun put(urlString: String? = null) = request(HttpMethod.PUT, urlString)
+    fun delete(urlString: String? = null) = request(HttpMethod.DELETE, urlString)
+    fun patch(urlString: String? = null) = request(HttpMethod.PATCH, urlString)
 
     fun basicAuth(user: String, password: String) {
         val credentialsEncoded = Base64.getEncoder().encodeToString("$user:$password".toByteArray())
@@ -103,17 +102,16 @@ class HttpDsl(
 }
 
 class ScenarioBuilder(
-        private val protocol: String,
-        private val host: String,
-        private val port: Int,
+        private val baseURL: URL,
         private val builder: HttpDsl.() -> Unit,
 ) {
     fun build(): Scenario {
-        return Scenario(HttpDsl(protocol, host, port).apply(builder).scenarioSteps)
+        return Scenario(HttpDsl(baseURL).apply(builder).scenarioSteps)
     }
 }
 
-fun scenario(protocol: String,
-             host: String,
-             port: Int,
-             builder: HttpDsl.() -> Unit): ScenarioBuilder = ScenarioBuilder(protocol, host, port, builder)
+fun scenario(baseUrlString: String,
+             builder: HttpDsl.() -> Unit): ScenarioBuilder {
+    val baseUrl: URL = baseUrlString.toUrl()
+    return ScenarioBuilder(baseUrl, builder)
+}

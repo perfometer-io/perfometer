@@ -6,6 +6,7 @@ import io.perfometer.http.HttpHeaders
 import io.perfometer.http.HttpMethod
 import io.perfometer.http.PauseStep
 import io.perfometer.http.RequestStep
+import java.net.URL
 import java.time.Duration
 import java.util.*
 import kotlin.test.Test
@@ -16,7 +17,7 @@ internal class HttpDslSpecification {
     @Test
     fun `should create scenario with one get request`() {
 
-        val scenario = scenario("https", "perfometer.io", 443) {
+        val scenario = scenario("https://perfometer.io") {
             get().path { "/" }
         }.build()
 
@@ -24,9 +25,7 @@ internal class HttpDslSpecification {
         when (val step = scenario.steps.first()) {
             is RequestStep -> {
                 step.request.method shouldBe HttpMethod.GET
-                step.request.protocol shouldBe "https"
-                step.request.host shouldBe "perfometer.io"
-                step.request.port shouldBe 443
+                step.request.url shouldBe URL("https://perfometer.io")
             }
             else -> fail("Expected RequestStep")
         }
@@ -35,7 +34,7 @@ internal class HttpDslSpecification {
     @Test
     fun `should create scenario with two get requests, the second with params`() {
 
-        val scenario = scenario("https", "perfometer.io", 443) {
+        val scenario = scenario("https://perfometer.io") {
             get().path { "/" }
                     .header { HttpHeader("x-foo", "bar") }
 
@@ -67,7 +66,7 @@ internal class HttpDslSpecification {
     fun `should create scenario with post request`() {
 
         val expectedBody = "foo bar".toByteArray()
-        val scenario = scenario("https", "perfometer.io", 443) {
+        val scenario = scenario("https://perfometer.io") {
             post().path { "/" }
                     .body { expectedBody }
         }.build()
@@ -81,7 +80,7 @@ internal class HttpDslSpecification {
     @Test
     fun `should add pause step`() {
         val expectedDuration = Duration.ofMillis(2000)
-        val scenario = scenario("https", "perfometer.io", 443) {
+        val scenario = scenario("https://perfometer.io") {
             pause(expectedDuration)
         }.build()
 
@@ -100,7 +99,7 @@ internal class HttpDslSpecification {
         val password = "password"
         val credentialsEncoded = Base64.getEncoder().encodeToString("$user:$password".toByteArray())
 
-        val securedScenario = scenario("http", "perfometer.io", 80) {
+        val securedScenario = scenario("http://perfometer.io") {
             basicAuth(user, password)
             get().path { "/" }
             get().path { "/" }
@@ -109,7 +108,7 @@ internal class HttpDslSpecification {
 
         val securedRequestsCount = securedScenario.steps.filterIsInstance<RequestStep>()
                 .flatMap { it.request.headers().entries }
-                .filter { header -> header.key == HttpHeaders.AUTHORIZATION  && header.value == "Basic $credentialsEncoded" }
+                .filter { header -> header.key == HttpHeaders.AUTHORIZATION && header.value == "Basic $credentialsEncoded" }
                 .count()
         securedRequestsCount shouldBe securedScenario.steps.size
     }
@@ -119,7 +118,7 @@ internal class HttpDslSpecification {
         val name = "Header-Name"
         val value = "example value"
 
-        val scenario = scenario("http", "perfometer.io", 80) {
+        val scenario = scenario("http://perfometer.io") {
             header { name to value }
             get().path { "/" }
             get().path { "/" }
@@ -128,8 +127,30 @@ internal class HttpDslSpecification {
 
         val requestsCount = scenario.steps.filterIsInstance<RequestStep>()
                 .flatMap { it.request.headers().entries }
-                .filter { header -> header.key == name  && header.value == value }
+                .filter { header -> header.key == name && header.value == value }
                 .count()
         requestsCount shouldBe scenario.steps.size
+    }
+
+    @Test
+    fun `should use url provided on method level overwriting base url`() {
+        // given two different URLs
+        val baseUrl = "http://perfometer.io"
+        val expectedUrl = "http://localhost:8080"
+
+        // when the scenario is build with base url, but the URL is overwritten per request
+        val scenario = scenario(baseUrl) {
+            get(expectedUrl).path { "/" }
+            post(expectedUrl).path{ "/" }
+            put(expectedUrl).path { "/" }
+            delete(expectedUrl).path { "/" }
+            patch(expectedUrl).path { "/" }
+        }.build()
+
+        // then, the url set on a request is used instead of the global setting
+        scenario.steps.filterIsInstance<RequestStep>().forEach {
+            it.request.url shouldBe URL(expectedUrl)
+        }
+
     }
 }

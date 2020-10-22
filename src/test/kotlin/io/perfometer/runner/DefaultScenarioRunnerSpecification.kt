@@ -7,11 +7,11 @@ import io.perfometer.dsl.scenario
 import io.perfometer.http.HttpMethod
 import io.perfometer.http.HttpResponse
 import io.perfometer.http.HttpStatus
-import io.perfometer.http.RequestStep
 import io.perfometer.http.client.HttpClient
 import io.perfometer.statistics.ScenarioSummary
 import io.perfometer.statistics.printer.StatisticsPrinter
 import org.junit.Before
+import java.net.URL
 import java.time.Duration
 import kotlin.test.Test
 
@@ -44,15 +44,13 @@ class DefaultScenarioRunnerSpecification {
 
     @Test
     fun `should execute single GET request on a single thread`() {
-        val scenario = scenario("https", "perfometer.io", 443) {
+        val scenario = scenario("https://perfometer.io") {
             get().path { "/" }
         }
 
-        runner.run(scenario, RunnerConfiguration(threadCount = 1))
+        runner.run(scenario, RunnerConfiguration(threads = 1))
         httpClient.requests.size shouldBe 1
-        httpClient.requests[0].protocol shouldBe "https"
-        httpClient.requests[0].host shouldBe "perfometer.io"
-        httpClient.requests[0].port shouldBe 443
+        httpClient.requests[0].url shouldBe URL("https://perfometer.io")
         httpClient.requests[0].method shouldBe HttpMethod.GET
         httpClient.requests[0].pathWithParams() shouldBe "/"
         statsPrinter.calls shouldBe 1
@@ -60,7 +58,7 @@ class DefaultScenarioRunnerSpecification {
 
     @Test
     fun `should execute 8 requests total on two async jobs`() {
-        val scenario = scenario("http", "perfometer.io", 80) {
+        val scenario = scenario("http://perfometer.io") {
             get().path { "/" }
             get().path { "/" }
             delete().path { "/delete" }
@@ -74,12 +72,12 @@ class DefaultScenarioRunnerSpecification {
 
     @Test
     fun `should pause for at least two seconds`() {
-        val scenario = scenario("https", "perfometer.io", 80) {
+        val scenario = scenario("http://perfometer.io") {
             pause(Duration.ofSeconds(2))
         }
 
         val startTime = System.currentTimeMillis()
-        runner.run(scenario, RunnerConfiguration(threadCount = 1))
+        runner.run(scenario, RunnerConfiguration(threads = 1))
         val diff = System.currentTimeMillis() - startTime
         diff shouldBeGreaterThanOrEqualTo 2000L
         statsPrinter.calls shouldBe 1

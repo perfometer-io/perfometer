@@ -28,7 +28,7 @@ class SimpleHttpClient(
     }
 
     private fun createHttpConnectionForRequest(request: RequestBuilder): HttpURLConnection {
-        return httpConnection(request.protocol, request.host, request.port, request.pathWithParams()) {
+        return httpConnection(request.url, request.pathWithParams()) {
             if (trustAllCertificates) {
                 trustAllCertificates()
             }
