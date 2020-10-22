@@ -9,7 +9,7 @@ import io.perfometer.statistics.printer.StdOutStatisticsPrinter
 fun main() {
 
     DefaultScenarioRunner(SimpleHttpClient(true), StdOutStatisticsPrinter())
-            .run(scenario("http","localhost", 8080) {
+            .run(scenario("http://perfometer.io") {
                 // Provide your scenario here
             }, RunnerConfiguration(10))
 }

@@ -26,13 +26,11 @@ object TrustAllSslSocketFactoryProvider {
 }
 
 internal class HttpConnectionBuilder(
-        protocol: String,
-        host: String,
-        port: Int,
+        url: URL,
         path: String,
 ) {
 
-    val connection = URL("$protocol://$host:$port$path").openConnection() as HttpURLConnection
+    val connection = URL(url, path).openConnection() as HttpURLConnection
 
     fun trustAllCertificates() {
         if (connection is HttpsURLConnection) {
@@ -58,10 +56,8 @@ internal class HttpConnectionBuilder(
     }
 }
 
-internal fun httpConnection(protocol: String,
-                            host: String,
-                            port: Int,
+internal fun httpConnection(baseUrl: URL,
                             path: String,
                             builder: HttpConnectionBuilder.() -> Unit):
-        HttpURLConnection = HttpConnectionBuilder(protocol, host, port, path).apply(builder).connection
+        HttpURLConnection = HttpConnectionBuilder(baseUrl, path).apply(builder).connection
 

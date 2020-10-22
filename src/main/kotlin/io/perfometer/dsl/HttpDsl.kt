@@ -1,75 +1,16 @@
 package io.perfometer.dsl
 
 import io.perfometer.http.*
+import io.perfometer.itnernal.helper.toUrl
+import java.net.URL
 import java.time.Duration
 import java.util.*
 
 typealias HttpHeader = Pair<String, String>
 typealias HttpParam = Pair<String, String>
 
-class RequestBuilder(
-        val protocol: String,
-        val host: String,
-        val port: Int,
-        val method: HttpMethod,
-        initialHeaders: List<() -> HttpHeader>
-) {
-    private var path: () -> String = { "" }
-    private val headers: MutableList<() -> HttpHeader> = initialHeaders.toMutableList()
-    private val params: MutableList<() -> HttpParam> = mutableListOf()
-
-    var body: () -> ByteArray = { ByteArray(0) }
-        private set
-
-    var consumer: (HttpResponse) -> Unit = {}
-        private set
-
-    fun path(path: () -> String): RequestBuilder {
-        this.path = path
-        return this
-    }
-
-    fun body(body: () -> ByteArray): RequestBuilder {
-        this.body = body
-        return this
-    }
-
-    fun header(header: () -> HttpHeader): RequestBuilder {
-        headers.add(header)
-        return this
-    }
-
-    fun param(param: () -> HttpParam): RequestBuilder {
-        params.add(param)
-        return this
-    }
-
-    fun consume(consumer: (HttpResponse) -> Unit): RequestBuilder {
-        this.consumer = consumer
-        return this
-    }
-
-    fun pathWithParams(): String {
-        return path() + paramsToString()
-    }
-
-    private fun paramsToString(): String {
-        return if (this.params.isNotEmpty())
-            this.params.map { it() }.joinToString("&", "?") { "${it.first}=${it.second}" }
-        else ""
-    }
-
-    fun headers(): Map<String, String> {
-        return this.headers.map { it() }
-                .groupBy({ it.first }, { it.second })
-                .mapValues { it.value.joinToString(",") }
-    }
-}
-
 class HttpDsl(
-        private val protocol: String,
-        private val host: String,
-        private val port: Int,
+        private val baseURL: URL,
 ) {
     private val steps: MutableList<Step> = mutableListOf()
     val scenarioSteps: List<Step> = steps
@@ -80,17 +21,18 @@ class HttpDsl(
         headers.add(header)
     }
 
-    private fun request(httpMethod: HttpMethod): RequestBuilder {
-        val request = RequestBuilder(protocol, host, port, httpMethod, headers)
+    private fun request(httpMethod: HttpMethod, urlString: String?): RequestBuilder {
+        val requestUrl = urlString?.toUrl() ?: baseURL
+        val request = RequestBuilder(requestUrl, httpMethod, headers)
         steps.add(RequestStep(request))
         return request
     }
 
-    fun get() = request(HttpMethod.GET)
-    fun post() = request(HttpMethod.POST)
-    fun put() = request(HttpMethod.PUT)
-    fun delete() = request(HttpMethod.DELETE)
-    fun patch() = request(HttpMethod.PATCH)
+    fun get(urlString: String? = null) = request(HttpMethod.GET, urlString)
+    fun post(urlString: String? = null) = request(HttpMethod.POST, urlString)
+    fun put(urlString: String? = null) = request(HttpMethod.PUT, urlString)
+    fun delete(urlString: String? = null) = request(HttpMethod.DELETE, urlString)
+    fun patch(urlString: String? = null) = request(HttpMethod.PATCH, urlString)
 
     fun basicAuth(user: String, password: String) {
         val credentialsEncoded = Base64.getEncoder().encodeToString("$user:$password".toByteArray())
@@ -103,23 +45,16 @@ class HttpDsl(
 }
 
 class ScenarioBuilder(
-        private val protocol: String,
-        private val host: String,
-        private val port: Int,
+        private val baseURL: URL,
         private val builder: HttpDsl.() -> Unit,
 ) {
     fun build(): Scenario {
-        return Scenario(HttpDsl(protocol, host, port).apply(builder).scenarioSteps)
+        return Scenario(HttpDsl(baseURL).apply(builder).scenarioSteps)
     }
 }
 
-fun scenario(protocol: String,
-             host: String,
-             port: Int,
-             builder: HttpDsl.() -> Unit): ScenarioBuilder = ScenarioBuilder(protocol, host, port, builder)
-
-fun scenario(httpConfig: HttpConfig,
+fun scenario(baseUrlString: String,
              builder: HttpDsl.() -> Unit): ScenarioBuilder {
-    val (protocol, host, port) = httpConfig
-    return ScenarioBuilder(protocol, host, port, builder)
+    val baseUrl: URL = baseUrlString.toUrl()
+    return ScenarioBuilder(baseUrl, builder)
 }
