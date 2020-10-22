@@ -1,4 +1,4 @@
-package io.perfometer.itnernal.helper
+package io.perfometer.internal.helper
 
 import io.perfometer.exception.InvalidScenarioConfigurationException
 import java.net.URL

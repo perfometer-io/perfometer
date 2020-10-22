@@ -1,4 +1,4 @@
-package io.perfometer.itnernal.helper
+package io.perfometer.internal.helper
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
