@@ -4,24 +4,19 @@ import io.perfometer.dsl.HttpStep
 import io.perfometer.dsl.PauseStep
 import io.perfometer.dsl.RequestStep
 import io.perfometer.http.client.HttpClient
-import io.perfometer.statistics.ConcurrentQueueScenarioStatistics
 import io.perfometer.statistics.PauseStatistics
-import io.perfometer.statistics.RequestStatistics
-import io.perfometer.statistics.ScenarioStatistics
 import kotlinx.coroutines.*
 import java.time.Duration
-import java.time.Instant
 
 internal class CoroutinesScenarioRunner(
-        private val httpClient: HttpClient,
-        private val scenarioStatistics: ScenarioStatistics = ConcurrentQueueScenarioStatistics(Instant.now())
-) : ScenarioRunner {
+        httpClient: HttpClient,
+) : BaseScenarioRunner(httpClient) {
 
-    override fun runUsers(userCount: Int, block: () -> Unit) {
+    override fun runUsers(userCount: Int, action: () -> Unit) {
         runBlocking {
             val jobs: List<Job> = (1..userCount).map {
                 launch {
-                    block()
+                    action()
                 }
             }
             jobs.joinAll()
@@ -39,24 +34,6 @@ internal class CoroutinesScenarioRunner(
         runBlocking {
             delay(duration.toMillis())
         }
-        scenarioStatistics.gather(PauseStatistics(duration))
-    }
-
-    private fun executeHttp(requestStep: RequestStep) {
-        val startTime = Instant.now()
-        val request = requestStep.request
-        val response = httpClient.executeHttp(request)
-        val timeElapsed = Duration.between(startTime, Instant.now())
-        request.consumer(response)
-        scenarioStatistics.gather(RequestStatistics(
-                request.method,
-                request.pathWithParams,
-                timeElapsed,
-                response.status)
-        )
-    }
-
-    override fun statistics(): ScenarioStatistics {
-        return scenarioStatistics
+        statistics.gather(PauseStatistics(duration))
     }
 }

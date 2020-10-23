@@ -40,7 +40,7 @@ abstract class ScenarioRunnerSpecification {
         requests[0].method shouldBe HttpMethod.GET
         requests[0].pathWithParams shouldBe "/"
 
-        runner.statistics().finish().statistics.size shouldBe 1
+        runner.statistics.finish().statistics.size shouldBe 1
     }
 
     @Test
@@ -61,7 +61,7 @@ abstract class ScenarioRunnerSpecification {
         }.runner(runner).run(2)
 
         requests.size shouldBe 8
-        runner.statistics().finish().statistics.size shouldBe 8
+        runner.statistics.finish().statistics.size shouldBe 8
     }
 
     @Test
@@ -74,6 +74,6 @@ abstract class ScenarioRunnerSpecification {
 
         val diff = System.currentTimeMillis() - startTime
         diff shouldBeGreaterThanOrEqualTo  2000L
-        runner.statistics().finish().statistics.size shouldBe 1
+        runner.statistics.finish().statistics.size shouldBe 1
     }
 }

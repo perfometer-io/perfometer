@@ -5,9 +5,9 @@ import io.perfometer.statistics.ScenarioStatistics
 
 interface ScenarioRunner {
 
-    fun runUsers(userCount: Int, block: () -> Unit)
+    val statistics: ScenarioStatistics
+
+    fun runUsers(userCount: Int, action: () -> Unit)
 
     fun runStep(step: HttpStep)
-
-    fun statistics(): ScenarioStatistics
 }

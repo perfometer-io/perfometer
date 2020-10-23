@@ -67,7 +67,7 @@ class RequestDsl(
                 .mapValues { it.value.joinToString(",") }
     }
 
-    fun build(): HttpRequest = HttpRequest(method, url, pathWithParams(), headers(), body, consumer)
+    fun build() = HttpRequest(method, url, pathWithParams(), headers(), body, consumer)
 }
 
 class HttpDsl(
@@ -122,9 +122,9 @@ class Scenario(
         runner.runUsers(userCount) {
             HttpDsl(baseURL, runner).apply(builder)
         }
-        return runner.statistics()
+        return runner.statistics
     }
 }
 
 fun scenario(baseUrlString: String,
-             builder: HttpDsl.() -> Unit): Scenario = Scenario(baseUrlString.toUrl(), builder)
+             builder: HttpDsl.() -> Unit) = Scenario(baseUrlString.toUrl(), builder)
