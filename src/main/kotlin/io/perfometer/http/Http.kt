@@ -1,5 +1,7 @@
 package io.perfometer.http
 
+import java.net.URL
+
 enum class HttpMethod {
     GET,
     POST,
@@ -40,4 +42,14 @@ object HttpHeaders {
     const val AUTHORIZATION = "Authorization"
 }
 
-class HttpResponse(val status: HttpStatus, val body: String? = null)
+data class HttpRequest(val method: HttpMethod,
+                       val url: URL,
+                       val pathWithParams: String,
+                       val headers: Map<String, String>,
+                       val body: ByteArray,
+                       val consumer: (HttpResponse) -> Unit)
+
+class HttpResponse(val status: HttpStatus, val body: ByteArray = byteArrayOf()) {
+
+    fun asString(): String = body.toString(Charsets.UTF_8)
+}

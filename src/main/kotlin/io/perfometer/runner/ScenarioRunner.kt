@@ -1,8 +1,13 @@
 package io.perfometer.runner
 
-import io.perfometer.dsl.ScenarioBuilder
+import io.perfometer.dsl.HttpStep
+import io.perfometer.statistics.ScenarioStatistics
 
-internal interface ScenarioRunner {
+interface ScenarioRunner {
 
-    fun run(scenario: ScenarioBuilder, configuration: RunnerConfiguration = RunnerConfiguration())
+    val statistics: ScenarioStatistics
+
+    fun runUsers(userCount: Int, action: () -> Unit)
+
+    fun runStep(step: HttpStep)
 }

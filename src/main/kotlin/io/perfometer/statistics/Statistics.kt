@@ -11,9 +11,9 @@ import java.util.*
  *
  * @author Tomasz Tarczyński
  */
-internal sealed class Statistics
+sealed class Statistics
 
-internal data class RequestStatistics(
+data class RequestStatistics(
         val method: HttpMethod,
         val pathWithParams: String,
         val timeTaken: Duration,
@@ -24,7 +24,7 @@ internal data class PauseStatistics(
         val duration: Duration,
 ) : Statistics()
 
-internal class ScenarioSummary(
+class ScenarioSummary(
         statistics: Collection<Statistics>,
         private val startTime: Instant,
         private val endTime: Instant,

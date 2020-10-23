@@ -1,6 +1,6 @@
 package io.perfometer.statistics
 
-internal interface ScenarioStatistics {
+interface ScenarioStatistics {
 
     /**
      * Aggregates scenario's statistic objects. The implementations of this method should be
