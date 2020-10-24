@@ -10,18 +10,22 @@ class SimpleHttpClient(
 ) : HttpClient {
 
     override fun executeHttp(request: HttpRequest): HttpResponse {
+        var headers: Map<String, String> = emptyMap()
         var body: ByteArray = byteArrayOf()
         var connection: HttpURLConnection? = null
         try {
             connection = createHttpConnectionForRequest(request)
             connection.connect()
+            headers = connection.headerFields
+                    .map { it.key to it.value.joinToString(",") }
+                    .toMap()
             body = connection.inputStream.readBytes()
         } catch (ignored: Exception) {
             ignored.printStackTrace()
         } finally {
             connection?.disconnect()
             val httpStatus = HttpStatus(connection?.responseCode ?: -1)
-            return HttpResponse(httpStatus, body)
+            return HttpResponse(httpStatus, headers, body)
         }
     }
 

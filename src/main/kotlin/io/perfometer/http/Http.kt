@@ -1,6 +1,7 @@
 package io.perfometer.http
 
 import java.net.URL
+import java.nio.charset.Charset
 
 enum class HttpMethod {
     GET,
@@ -40,6 +41,7 @@ data class HttpStatus(
 
 object HttpHeaders {
     const val AUTHORIZATION = "Authorization"
+    const val CONTENT_TYPE = "Content-Type"
 }
 
 data class HttpRequest(val method: HttpMethod,
@@ -49,7 +51,13 @@ data class HttpRequest(val method: HttpMethod,
                        val body: ByteArray,
                        val consumer: (HttpResponse) -> Unit)
 
-class HttpResponse(val status: HttpStatus, val body: ByteArray = byteArrayOf()) {
+class HttpResponse(val status: HttpStatus, val headers: Map<String, String>, val body: ByteArray = byteArrayOf()) {
 
-    fun asString(): String = body.toString(Charsets.UTF_8)
+    private fun charsetFromContentType(): Charset {
+        return headers[HttpHeaders.CONTENT_TYPE]?.substringAfterLast("charset=")?.let {
+            if (Charset.isSupported(it)) Charset.forName(it) else null
+        } ?: Charsets.UTF_8
+    }
+
+    fun asString(): String = body.toString(charsetFromContentType())
 }

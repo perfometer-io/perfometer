@@ -52,12 +52,12 @@ internal class HttpDslSpecification {
         scenario("https://perfometer.io") {
             get {
                 path("/")
-                header(HttpHeader("x-foo", "bar"))
+                headers("x-foo" to "bar")
             }
             get {
                 path("/path")
-                param(HttpParam("foo", "bar"))
-                param(HttpParam("bar", "baz"))
+                params("foo" to "bar",
+                       "bar" to "baz")
             }
         }.runner(runner).run(1)
 
@@ -145,7 +145,7 @@ internal class HttpDslSpecification {
         val value = "example value"
 
         scenario("http://perfometer.io") {
-            header(name to value)
+            headers(name to value)
             get {
                 path("/")
             }
@@ -193,6 +193,35 @@ internal class HttpDslSpecification {
         runner.steps.filterIsInstance<RequestStep>().forEach {
             it.request.url shouldBe URL(expectedUrl)
         }
+    }
 
+    @Test
+    fun `should override global header in request`() {
+        scenario("https://perfometer.io") {
+            headers("Accept" to "*/*")
+            get {
+                headers("Accept" to "application/json")
+            }
+        }.runner(runner).run(1);
+
+        val headers = runner.steps.filterIsInstance<RequestStep>()
+                .flatMap { it.request.headers.entries }
+        headers.size shouldBe 1
+        headers[0].key shouldBe "Accept"
+        headers[0].value shouldBe "application/json"
+    }
+
+    @Test
+    fun `should add multiple headers to request`() {
+        scenario("https://perfometer.io") {
+            get {
+                headers("User-Agent" to "perfometer",
+                        "Accept" to "application/json")
+            }
+        }.runner(runner).run(1)
+
+        val headers = runner.steps.filterIsInstance<RequestStep>()
+                .flatMap { it.request.headers.entries }
+        headers.size shouldBe 2
     }
 }
