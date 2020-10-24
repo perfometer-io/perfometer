@@ -7,20 +7,24 @@ import io.perfometer.http.client.HttpClient
 import io.perfometer.statistics.PauseStatistics
 import kotlinx.coroutines.*
 import java.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlin.time.toKotlinDuration
 
 internal class CoroutinesScenarioRunner(
         httpClient: HttpClient,
 ) : BaseScenarioRunner(httpClient) {
 
-    override fun runUsers(userCount: Int, action: suspend () -> Unit) {
+    @ExperimentalTime
+    override fun runUsers(userCount: Int, duration: Duration, action: suspend () -> Unit) {
         runBlocking {
             withContext(Dispatchers.Default) {
-                val jobs: List<Job> = (1..userCount).map {
+                (1..userCount).map {
                     launch {
-                        action()
+                        withTimeout(duration.toKotlinDuration()) {
+                            while (isActive) action()
+                        }
                     }
                 }
-                jobs.joinAll()
             }
         }
     }
