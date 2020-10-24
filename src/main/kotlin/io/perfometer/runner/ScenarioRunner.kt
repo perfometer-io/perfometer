@@ -7,7 +7,7 @@ interface ScenarioRunner {
 
     val statistics: ScenarioStatistics
 
-    fun runUsers(userCount: Int, action: () -> Unit)
+    fun runUsers(userCount: Int, action: suspend () -> Unit)
 
-    fun runStep(step: HttpStep)
+    suspend fun runStep(step: HttpStep)
 }

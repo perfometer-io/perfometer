@@ -4,6 +4,7 @@ import io.kotest.matchers.maps.shouldContain
 import io.kotest.matchers.shouldBe
 import io.perfometer.dsl.scenario
 import io.perfometer.http.HttpHeaders
+import java.time.Duration
 import java.util.concurrent.ThreadLocalRandom
 import kotlin.properties.Delegates
 import kotlin.test.Test

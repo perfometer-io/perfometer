@@ -6,6 +6,7 @@ import io.perfometer.http.HttpHeaders
 import io.perfometer.http.HttpMethod
 import io.perfometer.runner.ScenarioRunner
 import io.perfometer.statistics.ConcurrentQueueScenarioStatistics
+import kotlinx.coroutines.runBlocking
 import java.net.URL
 import java.time.Duration
 import java.time.Instant
@@ -18,11 +19,11 @@ internal class HttpDslSpecification {
     private val runner = object: ScenarioRunner {
         val steps = mutableListOf<HttpStep>()
 
-        override fun runUsers(userCount: Int, action: () -> Unit) {
-            action()
+        override fun runUsers(userCount: Int, action: suspend () -> Unit) {
+            runBlocking { action() }
         }
 
-        override fun runStep(step: HttpStep) {
+        override suspend fun runStep(step: HttpStep) {
             steps.add(step)
         }
 
