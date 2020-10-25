@@ -12,28 +12,28 @@ internal class CoroutinesScenarioRunner(
         httpClient: HttpClient,
 ) : BaseScenarioRunner(httpClient) {
 
-    override fun runUsers(userCount: Int, action: () -> Unit) {
+    override fun runUsers(userCount: Int, action: suspend () -> Unit) {
         runBlocking {
-            val jobs: List<Job> = (1..userCount).map {
-                launch {
-                    action()
+            withContext(Dispatchers.Default) {
+                val jobs: List<Job> = (1..userCount).map {
+                    launch {
+                        action()
+                    }
                 }
+                jobs.joinAll()
             }
-            jobs.joinAll()
         }
     }
 
-    override fun runStep(step: HttpStep) {
+    override suspend fun runStep(step: HttpStep) {
         when (step) {
             is RequestStep -> executeHttp(step)
             is PauseStep -> pauseFor(step.duration)
         }
     }
 
-    private fun pauseFor(duration: Duration) {
-        runBlocking {
-            delay(duration.toMillis())
-        }
+    private suspend fun pauseFor(duration: Duration) {
+        delay(duration.toMillis())
         statistics.gather(PauseStatistics(duration))
     }
 }

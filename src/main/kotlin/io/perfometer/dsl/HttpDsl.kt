@@ -74,21 +74,21 @@ class HttpDsl(
         this.headers.putAll(headers)
     }
 
-    private fun request(httpMethod: HttpMethod, urlString: String?, builder: RequestDsl.() -> Unit) {
+    private suspend fun request(httpMethod: HttpMethod, urlString: String?, builder: RequestDsl.() -> Unit) {
         val requestUrl = urlString?.toUrl() ?: baseURL
         val request = RequestDsl(requestUrl, httpMethod, headers).apply(builder).build()
         scenarioRunner.runStep(RequestStep(request))
     }
 
-    fun get(urlString: String? = null, builder: RequestDsl.() -> Unit)
+    suspend fun get(urlString: String? = null, builder: RequestDsl.() -> Unit)
             = request(HttpMethod.GET, urlString, builder)
-    fun post(urlString: String? = null, builder: RequestDsl.() -> Unit)
+    suspend fun post(urlString: String? = null, builder: RequestDsl.() -> Unit)
             = request(HttpMethod.POST, urlString, builder)
-    fun put(urlString: String? = null, builder: RequestDsl.() -> Unit)
+    suspend fun put(urlString: String? = null, builder: RequestDsl.() -> Unit)
             = request(HttpMethod.PUT, urlString, builder)
-    fun delete(urlString: String? = null, builder: RequestDsl.() -> Unit)
+    suspend fun delete(urlString: String? = null, builder: RequestDsl.() -> Unit)
             = request(HttpMethod.DELETE, urlString, builder)
-    fun patch(urlString: String? = null, builder: RequestDsl.() -> Unit)
+    suspend fun patch(urlString: String? = null, builder: RequestDsl.() -> Unit)
             = request(HttpMethod.PATCH, urlString, builder)
 
     fun basicAuth(user: String, password: String) {
@@ -96,14 +96,14 @@ class HttpDsl(
         headers(HttpHeaders.AUTHORIZATION to "Basic $credentialsEncoded")
     }
 
-    fun pause(duration: Duration) {
+    suspend fun pause(duration: Duration) {
         scenarioRunner.runStep(PauseStep(duration))
     }
 }
 
 class Scenario(
         private val baseURL: URL,
-        private val builder: HttpDsl.() -> Unit,
+        private val builder: suspend HttpDsl.() -> Unit,
 ) {
     private var runner: ScenarioRunner = CoroutinesScenarioRunner(SimpleHttpClient(false))
 
@@ -114,11 +114,11 @@ class Scenario(
 
     fun run(userCount: Int): ScenarioStatistics {
         runner.runUsers(userCount) {
-            HttpDsl(baseURL, runner).apply(builder)
+            builder(HttpDsl(baseURL, runner))
         }
         return runner.statistics
     }
 }
 
 fun scenario(baseUrlString: String,
-             builder: HttpDsl.() -> Unit) = Scenario(baseUrlString.toUrl(), builder)
+             builder: suspend HttpDsl.() -> Unit) = Scenario(baseUrlString.toUrl(), builder)
