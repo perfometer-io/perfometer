@@ -25,6 +25,7 @@ internal class CoroutinesScenarioRunner(
                         }
                     }
                 }
+                jobs.joinAll()
             }
         }
     }
