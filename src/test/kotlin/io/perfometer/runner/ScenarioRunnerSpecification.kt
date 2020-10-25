@@ -1,5 +1,7 @@
 package io.perfometer.runner
 
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.comparables.shouldBeGreaterThanOrEqualTo
 import io.kotest.matchers.shouldBe
 import io.perfometer.dsl.scenario
@@ -28,23 +30,23 @@ abstract class ScenarioRunnerSpecification {
     protected abstract val runner: ScenarioRunner
 
     @Test
-    fun `should execute single GET request on a single thread`() {
+    fun `should execute single GET request for a single user`() {
         scenario("https://perfometer.io") {
             get {
                 path("/")
             }
-        }.runner(runner).run(1)
+        }.runner(runner).run(1, Duration.ofMillis(100))
 
-        requests.size shouldBe  1
-        requests[0].url.toString() shouldBe "https://perfometer.io"
-        requests[0].method shouldBe HttpMethod.GET
-        requests[0].pathWithParams shouldBe "/"
+        requests.size shouldBeGreaterThan  0
+        requests.map { it.url.toString() }.filter { it != "https://perfometer.io" } shouldHaveSize 0
+        requests.map { it.method }.filter { it != HttpMethod.GET } shouldHaveSize 0
+        requests.map { it.pathWithParams }.filter { it != "/" } shouldHaveSize 0
 
-        runner.statistics.finish().statistics.size shouldBe 1
+        runner.statistics.finish().statistics.size shouldBeGreaterThan  0
     }
 
     @Test
-    fun `should execute 8 requests total on two async jobs`() {
+    fun `should execute 8 requests total on two async users`() {
         scenario("http://perfometer.io") {
             get {
                 path("/")
@@ -58,10 +60,10 @@ abstract class ScenarioRunnerSpecification {
             delete {
                 path("/delete")
             }
-        }.runner(runner).run(2)
+        }.runner(runner).run(2, Duration.ofMillis(100))
 
-        requests.size shouldBe 8
-        runner.statistics.finish().statistics.size shouldBe 8
+        requests.size shouldBeGreaterThan 8
+        runner.statistics.finish().statistics.size shouldBeGreaterThan 8
     }
 
     @Test
@@ -70,7 +72,7 @@ abstract class ScenarioRunnerSpecification {
 
         scenario("https://perfometer.io") {
             pause(Duration.ofSeconds(2))
-        }.runner(runner).run(1)
+        }.runner(runner).run(1, Duration.ofMillis(2100))
 
         val diff = System.currentTimeMillis() - startTime
         diff shouldBeGreaterThanOrEqualTo  2000L

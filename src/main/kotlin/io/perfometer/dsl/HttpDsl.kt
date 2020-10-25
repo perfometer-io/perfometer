@@ -112,8 +112,8 @@ class Scenario(
         return this
     }
 
-    fun run(userCount: Int): ScenarioStatistics {
-        runner.runUsers(userCount) {
+    fun run(userCount: Int, duration: Duration): ScenarioStatistics {
+        runner.runUsers(userCount, duration) {
             builder(HttpDsl(baseURL, runner))
         }
         return runner.statistics

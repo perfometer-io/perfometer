@@ -19,7 +19,7 @@ internal class HttpDslSpecification {
     private val runner = object: ScenarioRunner {
         val steps = mutableListOf<HttpStep>()
 
-        override fun runUsers(userCount: Int, action: suspend () -> Unit) {
+        override fun runUsers(userCount: Int, duration: Duration, action: suspend () -> Unit) {
             runBlocking { action() }
         }
 
@@ -35,7 +35,7 @@ internal class HttpDslSpecification {
 
         scenario("https://perfometer.io") {
             get { path("/") }
-        }.runner(runner).run(1)
+        }.runner(runner).run(1, Duration.ZERO)
 
         runner.steps.size shouldBe 1
         when (val step = runner.steps.first()) {
@@ -60,7 +60,7 @@ internal class HttpDslSpecification {
                 params("foo" to "bar",
                        "bar" to "baz")
             }
-        }.runner(runner).run(1)
+        }.runner(runner).run(1, Duration.ZERO)
 
         runner.steps.size shouldBe 2
         when (val step1 = runner.steps[0]) {
@@ -90,7 +90,7 @@ internal class HttpDslSpecification {
                 path("/")
                 body(expectedBody)
             }
-        }.runner(runner).run(1)
+        }.runner(runner).run(1, Duration.ZERO)
 
         runner.steps.size shouldBe 1
         val step = runner.steps.first() as RequestStep
@@ -103,7 +103,7 @@ internal class HttpDslSpecification {
         val expectedDuration = Duration.ofMillis(2000)
         scenario("https://perfometer.io") {
             pause(expectedDuration)
-        }.runner(runner).run(1)
+        }.runner(runner).run(1, Duration.ZERO)
 
         runner.steps.size shouldBe 1
         when (val step = runner.steps.first()) {
@@ -131,7 +131,7 @@ internal class HttpDslSpecification {
             post {
                 path("/post-path")
             }
-        }.runner(runner).run(1)
+        }.runner(runner).run(1, Duration.ZERO)
 
         val securedRequestsCount = runner.steps.filterIsInstance<RequestStep>()
                 .flatMap { it.request.headers.entries }
@@ -156,7 +156,7 @@ internal class HttpDslSpecification {
             post {
                 path("/post-path")
             }
-        }.runner(runner).run(1)
+        }.runner(runner).run(1, Duration.ZERO)
 
         val requestsCount = runner.steps.filterIsInstance<RequestStep>()
                 .flatMap { it.request.headers.entries }
@@ -188,7 +188,7 @@ internal class HttpDslSpecification {
             patch(expectedUrl) {
                 path("/")
             }
-        }.runner(runner).run(1)
+        }.runner(runner).run(1, Duration.ZERO)
 
         // then, the url set on a request is used instead of the global setting
         runner.steps.filterIsInstance<RequestStep>().forEach {
@@ -203,7 +203,7 @@ internal class HttpDslSpecification {
             get {
                 headers("Accept" to "application/json")
             }
-        }.runner(runner).run(1);
+        }.runner(runner).run(1, Duration.ZERO);
 
         val headers = runner.steps.filterIsInstance<RequestStep>()
                 .flatMap { it.request.headers.entries }
@@ -219,7 +219,7 @@ internal class HttpDslSpecification {
                 headers("User-Agent" to "perfometer",
                         "Accept" to "application/json")
             }
-        }.runner(runner).run(1)
+        }.runner(runner).run(1, Duration.ZERO)
 
         val headers = runner.steps.filterIsInstance<RequestStep>()
                 .flatMap { it.request.headers.entries }
