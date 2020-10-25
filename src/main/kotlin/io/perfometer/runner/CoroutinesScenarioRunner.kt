@@ -16,13 +16,11 @@ internal class CoroutinesScenarioRunner(
 
     @ExperimentalTime
     override fun runUsers(userCount: Int, duration: Duration, action: suspend () -> Unit) {
-        runBlocking {
-            withContext(Dispatchers.Default) {
-                (1..userCount).map {
-                    launch {
-                        withTimeout(duration.toKotlinDuration()) {
-                            while (isActive) action()
-                        }
+        runBlocking(Dispatchers.Default) {
+            (1..userCount).map {
+                launch {
+                    withTimeout(duration.toKotlinDuration()) {
+                        while (isActive) action()
                     }
                 }
             }

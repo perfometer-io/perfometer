@@ -4,6 +4,7 @@ import io.perfometer.http.HttpHeaders
 import io.perfometer.http.HttpMethod
 import io.perfometer.http.HttpRequest
 import io.perfometer.http.HttpResponse
+import io.perfometer.http.client.KtorHttpClient
 import io.perfometer.http.client.SimpleHttpClient
 import io.perfometer.internal.helper.toUrl
 import io.perfometer.runner.CoroutinesScenarioRunner
@@ -105,7 +106,7 @@ class Scenario(
         private val baseURL: URL,
         private val builder: suspend HttpDsl.() -> Unit,
 ) {
-    private var runner: ScenarioRunner = CoroutinesScenarioRunner(SimpleHttpClient(false))
+    private var runner: ScenarioRunner = CoroutinesScenarioRunner(KtorHttpClient())
 
     fun runner(runner: ScenarioRunner): Scenario {
         this.runner = runner

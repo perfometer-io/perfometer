@@ -13,7 +13,7 @@ abstract class BaseScenarioRunner(
         override val statistics: ScenarioStatistics = ConcurrentQueueScenarioStatistics(Instant.now()),
 ) : ScenarioRunner {
 
-    protected fun executeHttp(requestStep: RequestStep) {
+    protected suspend fun executeHttp(requestStep: RequestStep) {
         val startTime = Instant.now()
         val request = requestStep.request
         val response = httpClient.executeHttp(request)

@@ -5,5 +5,5 @@ import io.perfometer.http.HttpResponse
 
 interface HttpClient {
 
-    fun executeHttp(request: HttpRequest): HttpResponse
+    suspend fun executeHttp(request: HttpRequest): HttpResponse
 }

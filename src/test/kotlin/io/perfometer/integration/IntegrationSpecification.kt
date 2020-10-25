@@ -44,6 +44,6 @@ class IntegrationSpecification : BaseIntegrationSpecification() {
                     it.asString() shouldBe "just a string"
                 }
             }
-        }.run(10, Duration.ofMillis(100))
+        }.run(10, Duration.ofSeconds(1))
     }
 }
