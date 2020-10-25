@@ -21,7 +21,7 @@ abstract class ScenarioRunnerSpecification {
             synchronized(this) {
                 requests += request
             }
-            return HttpResponse(HttpStatus(200))
+            return HttpResponse(HttpStatus(200), emptyMap())
         }
     }
 

@@ -23,11 +23,11 @@ typealias HttpParam = Pair<String, String>
 class RequestDsl(
         private val url: URL,
         private val method: HttpMethod,
-        initialHeaders: List<HttpHeader>
+        initialHeaders: Map<String, String>
 ) {
     private var path: String = ""
-    private val headers: MutableList<HttpHeader> = initialHeaders.toMutableList()
-    private val params: MutableList<HttpParam> = mutableListOf()
+    private val headers = initialHeaders.toMutableMap()
+    private val params = mutableListOf<HttpParam>()
     private var body: ByteArray = ByteArray(0)
     private var consumer: (HttpResponse) -> Unit = {}
 
@@ -39,12 +39,12 @@ class RequestDsl(
         this.body = body
     }
 
-    fun header(header: HttpHeader) {
-        headers.add(header)
+    fun headers(vararg headers: HttpHeader) {
+        this.headers.putAll(headers)
     }
 
-    fun param(param: HttpParam) {
-        params.add(param)
+    fun params(vararg params: HttpParam) {
+        this.params.addAll(params)
     }
 
     fun consume(consumer: (HttpResponse) -> Unit) {
@@ -61,23 +61,17 @@ class RequestDsl(
         else ""
     }
 
-    private fun headers(): Map<String, String> {
-        return this.headers
-                .groupBy({ it.first }, { it.second })
-                .mapValues { it.value.joinToString(",") }
-    }
-
-    fun build() = HttpRequest(method, url, pathWithParams(), headers(), body, consumer)
+    fun build() = HttpRequest(method, url, pathWithParams(), headers, body, consumer)
 }
 
 class HttpDsl(
         private val baseURL: URL,
         private val scenarioRunner: ScenarioRunner,
 ) {
-    private val headers: MutableList<HttpHeader> = mutableListOf()
+    private val headers = mutableMapOf<String, String>()
 
-    fun header(header: HttpHeader) {
-        headers.add(header)
+    fun headers(vararg headers: HttpHeader) {
+        this.headers.putAll(headers)
     }
 
     private fun request(httpMethod: HttpMethod, urlString: String?, builder: RequestDsl.() -> Unit) {
@@ -99,7 +93,7 @@ class HttpDsl(
 
     fun basicAuth(user: String, password: String) {
         val credentialsEncoded = Base64.getEncoder().encodeToString("$user:$password".toByteArray())
-        header(HttpHeaders.AUTHORIZATION to "Basic $credentialsEncoded")
+        headers(HttpHeaders.AUTHORIZATION to "Basic $credentialsEncoded")
     }
 
     fun pause(duration: Duration) {
