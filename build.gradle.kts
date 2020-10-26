@@ -1,14 +1,13 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+plugins {
+    kotlin("jvm") version "1.4.10"
+}
+
 object Versions {
-    const val kotlin = "1.4.10"
     const val kotlinCoroutines = "1.4.0-M1"
     const val ktor = "1.4.0"
     const val kotest = "4.3.0"
-}
-
-plugins {
-    kotlin("jvm") version Versions.kotlin
 }
 
 dependencies {
