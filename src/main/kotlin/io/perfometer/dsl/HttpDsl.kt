@@ -1,15 +1,13 @@
 package io.perfometer.dsl
 
-import io.perfometer.http.HttpHeaders
-import io.perfometer.http.HttpMethod
-import io.perfometer.http.HttpRequest
-import io.perfometer.http.HttpResponse
+import io.perfometer.http.*
 import io.perfometer.http.client.KtorHttpClient
 import io.perfometer.internal.helper.toUrl
 import io.perfometer.runner.CoroutinesScenarioRunner
 import io.perfometer.runner.ScenarioRunner
 import io.perfometer.statistics.ScenarioSummary
-import io.perfometer.statistics.printer.StdOutStatisticsPrinter
+import io.perfometer.statistics.consumer.Output
+import io.perfometer.statistics.consumer.getStatisticsConsumer
 import java.net.URL
 import java.time.Duration
 import java.util.*
@@ -86,16 +84,11 @@ class HttpDsl(
         scenarioRunner.runStep(RequestStep(request))
     }
 
-    suspend fun get(urlString: String? = null, builder: RequestDsl.() -> Unit)
-            = request(HttpMethod.GET, urlString, builder)
-    suspend fun post(urlString: String? = null, builder: RequestDsl.() -> Unit)
-            = request(HttpMethod.POST, urlString, builder)
-    suspend fun put(urlString: String? = null, builder: RequestDsl.() -> Unit)
-            = request(HttpMethod.PUT, urlString, builder)
-    suspend fun delete(urlString: String? = null, builder: RequestDsl.() -> Unit)
-            = request(HttpMethod.DELETE, urlString, builder)
-    suspend fun patch(urlString: String? = null, builder: RequestDsl.() -> Unit)
-            = request(HttpMethod.PATCH, urlString, builder)
+    suspend fun get(urlString: String? = null, builder: RequestDsl.() -> Unit) = request(HttpMethod.GET, urlString, builder)
+    suspend fun post(urlString: String? = null, builder: RequestDsl.() -> Unit) = request(HttpMethod.POST, urlString, builder)
+    suspend fun put(urlString: String? = null, builder: RequestDsl.() -> Unit) = request(HttpMethod.PUT, urlString, builder)
+    suspend fun delete(urlString: String? = null, builder: RequestDsl.() -> Unit) = request(HttpMethod.DELETE, urlString, builder)
+    suspend fun patch(urlString: String? = null, builder: RequestDsl.() -> Unit) = request(HttpMethod.PATCH, urlString, builder)
 
     fun basicAuth(user: String, password: String) {
         val credentialsEncoded = Base64.getEncoder().encodeToString("$user:$password".toByteArray())
@@ -111,6 +104,8 @@ class Scenario(
         private val baseURL: URL,
         private val builder: suspend HttpDsl.() -> Unit,
 ) {
+    private val consumerSelector: (Output) -> (ScenarioSummary) -> Unit = { getStatisticsConsumer(it) }
+
     private var runner: ScenarioRunner = CoroutinesScenarioRunner(KtorHttpClient())
 
     fun runner(runner: ScenarioRunner): Scenario {
@@ -118,11 +113,18 @@ class Scenario(
         return this
     }
 
-    fun run(userCount: Int, duration: Duration): ScenarioSummary {
-        return runner.runUsers(userCount, duration) {
-            builder(HttpDsl(baseURL, runner))
-        }.also {
-            StdOutStatisticsPrinter().print(it)
+    fun run(userCount: Int,
+            duration: Duration,
+            vararg outputTo: Output = arrayOf(Output.STDOUT)): ScenarioSummary {
+        return runner
+                .runUsers(userCount, duration) { builder(HttpDsl(baseURL, runner)) }
+                .also { consumeStatistics(it, outputTo.toList()) }
+    }
+
+    private fun consumeStatistics(summary: ScenarioSummary,
+                                  outputs: List<Output>) {
+        for (outputType in outputs) {
+            consumerSelector(outputType)(summary)
         }
     }
 }

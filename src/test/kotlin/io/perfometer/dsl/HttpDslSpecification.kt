@@ -5,6 +5,7 @@ import io.kotest.matchers.shouldBe
 import io.perfometer.http.HttpHeaders
 import io.perfometer.http.HttpMethod
 import io.perfometer.runner.ScenarioRunner
+import io.perfometer.statistics.ConcurrentQueueScenarioStatistics
 import io.perfometer.statistics.ScenarioSummary
 import kotlinx.coroutines.runBlocking
 import java.net.URL
@@ -16,12 +17,14 @@ import kotlin.test.Test
 @Suppress("FunctionName")
 internal class HttpDslSpecification {
 
-    private val runner = object: ScenarioRunner {
+    private val runner = object : ScenarioRunner {
+        val statistics = ConcurrentQueueScenarioStatistics(Instant.now())
+
         val steps = mutableListOf<HttpStep>()
 
         override fun runUsers(userCount: Int, duration: Duration, action: suspend () -> Unit): ScenarioSummary {
             runBlocking { action() }
-            return ScenarioSummary(emptyList(), Instant.now(), Instant.now())
+            return statistics.finish()
         }
 
         override suspend fun runStep(step: HttpStep) {
@@ -57,7 +60,7 @@ internal class HttpDslSpecification {
             get {
                 path("/path")
                 params("foo" to "bar",
-                       "bar" to "baz")
+                        "bar" to "baz")
             }
         }.runner(runner).run(1, Duration.ZERO)
 

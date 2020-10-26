@@ -1,16 +1,16 @@
-package io.perfometer.statistics.printer
+package io.perfometer.statistics.consumer
 
 import io.perfometer.statistics.ScenarioSummary
 import io.perfometer.statistics.SummaryData
 import java.time.Duration
 
-internal class StdOutStatisticsPrinter : StatisticsPrinter {
+internal class StdOutStatisticsPrinter {
 
-    override fun print(scenarioSummary: ScenarioSummary) {
+    fun print(scenarioSummary: ScenarioSummary) {
         if (scenarioSummary.totalSummary == null) {
             println("No requests run!")
         } else {
-            println("Scenario Duration: %s\n".format(formatDuration(scenarioSummary.scenarioTime)))
+            println("Scenario Duration: %s\n".format(formatDuration(scenarioSummary.scenarioDuration)))
             arrayOf("REQUEST",
                     "COUNT",
                     "FAILED COUNT",
@@ -24,7 +24,7 @@ internal class StdOutStatisticsPrinter : StatisticsPrinter {
                     "SLOWEST TIME").forEach { printColumn(it) }
             println("|")
             printSummary(scenarioSummary.totalSummary)
-            scenarioSummary.summaries.forEach{
+            scenarioSummary.summaries.forEach {
                 printSummary(it)
             }
         }

@@ -37,6 +37,11 @@ data class HttpStatus(
         get() = !isCodeIn(100..599)
 
     private fun isCodeIn(range: IntRange) = code in range
+
+    override fun toString(): String {
+        return "HttpStatus: $code"
+    }
+
 }
 
 object HttpHeaders {

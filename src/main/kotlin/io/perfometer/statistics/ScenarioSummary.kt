@@ -23,7 +23,7 @@ class ScenarioSummary(
         endTime: Instant,
 ) {
     private val requestStatistics = statistics.filterIsInstance<RequestStatistics>()
-    val scenarioTime: Duration = Duration.between(startTime, endTime)
+    val scenarioDuration: Duration = Duration.between(startTime, endTime)
     val totalSummary = if (requestStatistics.isEmpty()) null
             else generateSummary("TOTAL", requestStatistics)
     val summaries = requestStatistics
