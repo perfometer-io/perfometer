@@ -9,7 +9,7 @@ class SimpleHttpClient(
         private val trustAllCertificates: Boolean,
 ) : HttpClient {
 
-    override fun executeHttp(request: HttpRequest): HttpResponse {
+    override suspend fun executeHttp(request: HttpRequest): HttpResponse {
         var headers: Map<String, String> = emptyMap()
         var body: ByteArray = byteArrayOf()
         var connection: HttpURLConnection? = null

@@ -19,7 +19,7 @@ abstract class ScenarioRunnerSpecification {
     private val requests = mutableListOf<HttpRequest>()
 
     protected val httpClient = object : HttpClient {
-        override fun executeHttp(request: HttpRequest): HttpResponse {
+        override suspend fun executeHttp(request: HttpRequest): HttpResponse {
             synchronized(this) {
                 requests += request
             }
