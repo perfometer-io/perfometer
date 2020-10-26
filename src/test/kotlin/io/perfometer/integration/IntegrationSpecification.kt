@@ -27,6 +27,7 @@ class IntegrationSpecification : BaseIntegrationSpecification() {
                 }
             }
             get {
+                name("GET /string/:id")
                 path("/string/${id}")
                 consume {
                     it.headers shouldContain (HttpHeaders.CONTENT_TYPE to "text/plain; charset=UTF-8")
@@ -34,16 +35,18 @@ class IntegrationSpecification : BaseIntegrationSpecification() {
                 }
             }
             put {
+                name("PUT /string/:id")
                 path("/string/${id}")
                 body("just a string".toByteArray())
             }
             get {
+                name("GET /string/:id")
                 path("/string/${id}")
                 consume {
                     it.headers shouldContain (HttpHeaders.CONTENT_TYPE to "text/plain; charset=UTF-8")
                     it.asString() shouldBe "just a string"
                 }
             }
-        }.run(10, Duration.ofSeconds(1))
+        }.run(100, Duration.ofSeconds(1))
     }
 }

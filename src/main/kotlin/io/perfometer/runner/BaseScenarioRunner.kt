@@ -10,7 +10,7 @@ import java.time.Instant
 
 abstract class BaseScenarioRunner(
         private val httpClient: HttpClient,
-        override val statistics: ScenarioStatistics = ConcurrentQueueScenarioStatistics(Instant.now()),
+        val statistics: ScenarioStatistics = ConcurrentQueueScenarioStatistics(Instant.now()),
 ) : ScenarioRunner {
 
     protected suspend fun executeHttp(requestStep: RequestStep) {
@@ -20,6 +20,7 @@ abstract class BaseScenarioRunner(
         val timeElapsed = Duration.between(startTime, Instant.now())
         request.consumer(response)
         statistics.gather(RequestStatistics(
+                request.name,
                 request.method,
                 request.pathWithParams,
                 timeElapsed,

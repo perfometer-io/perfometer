@@ -5,11 +5,11 @@ import io.perfometer.http.HttpMethod
 import io.perfometer.http.HttpRequest
 import io.perfometer.http.HttpResponse
 import io.perfometer.http.client.KtorHttpClient
-import io.perfometer.http.client.SimpleHttpClient
 import io.perfometer.internal.helper.toUrl
 import io.perfometer.runner.CoroutinesScenarioRunner
 import io.perfometer.runner.ScenarioRunner
-import io.perfometer.statistics.ScenarioStatistics
+import io.perfometer.statistics.ScenarioSummary
+import io.perfometer.statistics.printer.StdOutStatisticsPrinter
 import java.net.URL
 import java.time.Duration
 import java.util.*
@@ -26,11 +26,16 @@ class RequestDsl(
         private val method: HttpMethod,
         initialHeaders: Map<String, String>
 ) {
+    private var name: String? = null
     private var path: String = ""
     private val headers = initialHeaders.toMutableMap()
     private val params = mutableListOf<HttpParam>()
     private var body: ByteArray = ByteArray(0)
     private var consumer: (HttpResponse) -> Unit = {}
+
+    fun name(name: String) {
+        this.name = name
+    }
 
     fun path(path: String) {
         this.path = path
@@ -62,7 +67,7 @@ class RequestDsl(
         else ""
     }
 
-    fun build() = HttpRequest(method, url, pathWithParams(), headers, body, consumer)
+    fun build() = HttpRequest(name ?: "$method $path", method, url, pathWithParams(), headers, body, consumer)
 }
 
 class HttpDsl(
@@ -113,11 +118,12 @@ class Scenario(
         return this
     }
 
-    fun run(userCount: Int, duration: Duration): ScenarioStatistics {
-        runner.runUsers(userCount, duration) {
+    fun run(userCount: Int, duration: Duration): ScenarioSummary {
+        val summary = runner.runUsers(userCount, duration) {
             builder(HttpDsl(baseURL, runner))
         }
-        return runner.statistics
+        StdOutStatisticsPrinter().print(summary)
+        return summary
     }
 }
 
