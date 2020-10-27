@@ -3,7 +3,8 @@ package io.perfometer.runner
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.comparables.shouldBeGreaterThanOrEqualTo
-import io.kotest.matchers.shouldBe
+import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.perfometer.dsl.scenario
 import io.perfometer.http.HttpMethod
 import io.perfometer.http.HttpRequest
@@ -31,7 +32,7 @@ abstract class ScenarioRunnerSpecification {
 
     @Test
     fun `should execute single GET request for a single user`() {
-        scenario("https://perfometer.io") {
+        val summary = scenario("https://perfometer.io") {
             get {
                 path("/")
             }
@@ -42,12 +43,13 @@ abstract class ScenarioRunnerSpecification {
         requests.map { it.method }.filter { it != HttpMethod.GET } shouldHaveSize 0
         requests.map { it.pathWithParams }.filter { it != "/" } shouldHaveSize 0
 
-        runner.statistics.finish().statistics.size shouldBeGreaterThan  0
+        summary.totalSummary.shouldNotBeNull()
+                .requestCount shouldBeGreaterThan 0
     }
 
     @Test
     fun `should execute 8 requests total on two async users`() {
-        scenario("http://perfometer.io") {
+        val summary = scenario("http://perfometer.io") {
             get {
                 path("/")
             }
@@ -63,19 +65,20 @@ abstract class ScenarioRunnerSpecification {
         }.runner(runner).run(2, Duration.ofMillis(100))
 
         requests.size shouldBeGreaterThan 8
-        runner.statistics.finish().statistics.size shouldBeGreaterThan 8
+        summary.totalSummary.shouldNotBeNull()
+                .requestCount shouldBeGreaterThan 8
     }
 
     @Test
     fun `should pause for at least two seconds`() {
         val startTime = System.currentTimeMillis()
 
-        scenario("https://perfometer.io") {
+        val summary = scenario("https://perfometer.io") {
             pause(Duration.ofSeconds(2))
         }.runner(runner).run(1, Duration.ofMillis(2100))
 
         val diff = System.currentTimeMillis() - startTime
         diff shouldBeGreaterThanOrEqualTo  2000L
-        runner.statistics.finish().statistics.size shouldBe 1
+        summary.totalSummary.shouldBeNull()
     }
 }

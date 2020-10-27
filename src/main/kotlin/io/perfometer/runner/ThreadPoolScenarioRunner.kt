@@ -5,6 +5,7 @@ import io.perfometer.dsl.PauseStep
 import io.perfometer.dsl.RequestStep
 import io.perfometer.http.client.HttpClient
 import io.perfometer.statistics.PauseStatistics
+import io.perfometer.statistics.ScenarioSummary
 import kotlinx.coroutines.runBlocking
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
@@ -15,7 +16,7 @@ internal class ThreadPoolScenarioRunner(
         httpClient: HttpClient,
 ) : BaseScenarioRunner(httpClient) {
 
-    override fun runUsers(userCount: Int, duration: Duration, action: suspend () -> Unit) {
+    override fun runUsers(userCount: Int, duration: Duration, action: suspend () -> Unit): ScenarioSummary {
         val scenarioExecutor = Executors.newFixedThreadPool(userCount)
 
         val future = CompletableFuture.allOf(
@@ -28,6 +29,7 @@ internal class ThreadPoolScenarioRunner(
         }, duration.toNanos(), TimeUnit.NANOSECONDS)
 
         future.join()
+        return statistics.finish()
     }
 
     private fun runAction(action: suspend () -> Unit) {

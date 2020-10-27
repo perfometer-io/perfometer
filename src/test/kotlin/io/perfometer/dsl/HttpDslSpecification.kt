@@ -5,7 +5,7 @@ import io.kotest.matchers.shouldBe
 import io.perfometer.http.HttpHeaders
 import io.perfometer.http.HttpMethod
 import io.perfometer.runner.ScenarioRunner
-import io.perfometer.statistics.ConcurrentQueueScenarioStatistics
+import io.perfometer.statistics.ScenarioSummary
 import kotlinx.coroutines.runBlocking
 import java.net.URL
 import java.time.Duration
@@ -19,15 +19,14 @@ internal class HttpDslSpecification {
     private val runner = object: ScenarioRunner {
         val steps = mutableListOf<HttpStep>()
 
-        override fun runUsers(userCount: Int, duration: Duration, action: suspend () -> Unit) {
+        override fun runUsers(userCount: Int, duration: Duration, action: suspend () -> Unit): ScenarioSummary {
             runBlocking { action() }
+            return ScenarioSummary(emptyList(), Instant.now(), Instant.now())
         }
 
         override suspend fun runStep(step: HttpStep) {
             steps.add(step)
         }
-
-        override val statistics = ConcurrentQueueScenarioStatistics(Instant.now())
     }
 
     @Test
@@ -224,5 +223,21 @@ internal class HttpDslSpecification {
         val headers = runner.steps.filterIsInstance<RequestStep>()
                 .flatMap { it.request.headers.entries }
         headers.size shouldBe 2
+    }
+
+    @Test
+    fun `should be able to name request`() {
+        scenario("https://perfometer.io") {
+            get {
+                name("test name")
+            }
+        }.runner(runner).run(1, Duration.ZERO)
+
+        when (val step = runner.steps.first()) {
+            is RequestStep -> {
+                step.request.name shouldBe "test name"
+            }
+            else -> fail("Expected RequestStep")
+        }
     }
 }

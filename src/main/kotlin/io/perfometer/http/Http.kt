@@ -44,7 +44,8 @@ object HttpHeaders {
     const val CONTENT_TYPE = "Content-Type"
 }
 
-data class HttpRequest(val method: HttpMethod,
+data class HttpRequest(val name: String,
+                       val method: HttpMethod,
                        val url: URL,
                        val pathWithParams: String,
                        val headers: Map<String, String>,

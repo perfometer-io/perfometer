@@ -1,6 +1,6 @@
 package io.perfometer.statistics
 
-import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.perfometer.http.HttpMethod
 import io.perfometer.http.HttpStatus
@@ -17,23 +17,23 @@ class ConcurrentQueueScenarioStatisticsSpecification {
     fun `gather should add statistics to the summary`() {
         val scenarioStatistics = ConcurrentQueueScenarioStatistics(startTime.toInstant())
 
-        val getStatistics = RequestStatistics(HttpMethod.GET, "/", Duration.ofSeconds(1), HttpStatus(200))
+        val getStatistics = RequestStatistics("GET /", HttpMethod.GET, "/", Duration.ofSeconds(1), HttpStatus(200))
         scenarioStatistics.gather(getStatistics)
 
-        val postStatistics = RequestStatistics(HttpMethod.POST, "/", Duration.ofSeconds(1), HttpStatus(201))
+        val postStatistics = RequestStatistics("POST /", HttpMethod.POST, "/", Duration.ofSeconds(1), HttpStatus(201))
         scenarioStatistics.gather(postStatistics)
 
         val scenarioSummary = scenarioStatistics.finish()
-        scenarioSummary.statistics.size shouldBe 2
-        scenarioSummary.statistics shouldContain getStatistics
-        scenarioSummary.statistics shouldContain postStatistics
+        scenarioSummary.totalSummary.shouldNotBeNull()
+                .requestCount shouldBe 2
+        scenarioSummary.summaries.size shouldBe 2
     }
 
     @Test(IllegalStateException::class)
     fun `gather should not allow adding new statistics when the scenario has ended`() {
         val scenarioStatistics = ConcurrentQueueScenarioStatistics(startTime.toInstant())
 
-        val getStatistics = RequestStatistics(HttpMethod.GET, "/", Duration.ofSeconds(1), HttpStatus(200))
+        val getStatistics = RequestStatistics("GET /", HttpMethod.GET, "/", Duration.ofSeconds(1), HttpStatus(200))
         scenarioStatistics.gather(getStatistics)
 
         scenarioStatistics.finish()
