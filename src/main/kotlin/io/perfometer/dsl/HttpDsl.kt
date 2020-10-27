@@ -119,11 +119,11 @@ class Scenario(
     }
 
     fun run(userCount: Int, duration: Duration): ScenarioSummary {
-        val summary = runner.runUsers(userCount, duration) {
+        return runner.runUsers(userCount, duration) {
             builder(HttpDsl(baseURL, runner))
+        }.also {
+            StdOutStatisticsPrinter().print(it)
         }
-        StdOutStatisticsPrinter().print(summary)
-        return summary
     }
 }
 

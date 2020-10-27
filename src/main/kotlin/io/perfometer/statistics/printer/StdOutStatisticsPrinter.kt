@@ -11,17 +11,17 @@ internal class StdOutStatisticsPrinter : StatisticsPrinter {
             println("No requests run!")
         } else {
             println("Scenario Duration: %s\n".format(formatDuration(scenarioSummary.scenarioTime)))
-            printColumn("REQUEST")
-            printColumn("COUNT")
-            printColumn("FAILED COUNT")
-            printColumn("FASTEST TIME")
-            printColumn("AVERAGE TIME")
-            printColumn("95th PERCENTILE")
-            printColumn("96th PERCENTILE")
-            printColumn("97th PERCENTILE")
-            printColumn("98th PERCENTILE")
-            printColumn("99th PERCENTILE")
-            printColumn("SLOWEST TIME")
+            arrayOf("REQUEST",
+                    "COUNT",
+                    "FAILED COUNT",
+                    "FASTEST TIME",
+                    "AVERAGE TIME",
+                    "95th PERCENTILE",
+                    "96th PERCENTILE",
+                    "97th PERCENTILE",
+                    "98th PERCENTILE",
+                    "99th PERCENTILE",
+                    "SLOWEST TIME").forEach { printColumn(it) }
             println("|")
             printSummary(scenarioSummary.totalSummary)
             scenarioSummary.summaries.forEach{
@@ -31,17 +31,17 @@ internal class StdOutStatisticsPrinter : StatisticsPrinter {
     }
 
     private fun printSummary(it: SummaryData) {
-        printColumn(it.name)
-        printColumn(it.requestCount.toString())
-        printColumn(it.failedRequestCount.toString())
-        printColumn(formatDuration(it.fastestTime))
-        printColumn(formatDuration(it.averageTime))
-        printColumn(formatDuration(it.percentile95Time))
-        printColumn(formatDuration(it.percentile96Time))
-        printColumn(formatDuration(it.percentile97Time))
-        printColumn(formatDuration(it.percentile98Time))
-        printColumn(formatDuration(it.percentile99Time))
-        printColumn(formatDuration(it.slowestTime))
+        arrayOf(it.name,
+                it.requestCount.toString(),
+                it.failedRequestCount.toString(),
+                formatDuration(it.fastestTime),
+                formatDuration(it.averageTime),
+                formatDuration(it.percentile95Time),
+                formatDuration(it.percentile96Time),
+                formatDuration(it.percentile97Time),
+                formatDuration(it.percentile98Time),
+                formatDuration(it.percentile99Time),
+                formatDuration(it.slowestTime)).forEach { printColumn(it) }
         println("|")
     }
 
