@@ -31,7 +31,7 @@ internal object StatisticsTextFormatter {
             "98th PERCENTILE",
             "99th PERCENTILE",
             "SLOWEST TIME"
-        ).joinToString(separator = "") { printColumn(it) }
+        ).joinToString(separator = "", postfix = " |") { printColumn(it) }
     }
 
     private fun printSummary(sd: SummaryData): String {
@@ -47,7 +47,7 @@ internal object StatisticsTextFormatter {
             formatDuration(sd.percentile98Time),
             formatDuration(sd.percentile99Time),
             formatDuration(sd.slowestTime)
-        ).joinToString(separator = "") { printColumn(it) }
+        ).joinToString(separator = "", postfix = " |") { printColumn(it) }
     }
 
     private fun printRequests(summary: ScenarioSummary): String {
