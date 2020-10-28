@@ -1,29 +1,28 @@
 package io.perfometer.statistics.consumer
 
+import io.perfometer.internal.helper.toZonedDateTimeUTC
 import io.perfometer.statistics.ScenarioSummary
+import io.perfometer.statistics.consumer.FileTypeExtension.TXT
 import java.io.File
-import java.nio.charset.Charset
-import java.nio.file.Files
-import java.nio.file.Paths
+import java.time.ZonedDateTime
 
-internal object StatisticsTextFileWriter {
+internal object StatisticsTextFileWriter : StatisticsFileWriter() {
 
     fun write(scenarioSummary: ScenarioSummary) {
         val formatted: String = StatisticsTextFormatter.format(scenarioSummary)
-        val file: File = createReportFile()
-        Files.write(file.toPath(), formatted.toByteArray(Charset.forName("UTF-8")))
+        val file: File = createReportFile(scenarioSummary.startTime.toZonedDateTimeUTC())
+        file.writeText(formatted)
     }
 
-    private fun createReportFile(): File {
-        val file = Paths.get("${System.getProperty("user.dir")}/reports/report.txt").toFile()
-        if (!file.parentFile.exists()) {
-            file.parentFile.mkdirs()
+    private fun createReportFile(startTime: ZonedDateTime): File {
+        val reportFile = buildFilePath(startTime, TXT).toFile()
+        if (!reportFile.parentFile.exists()) {
+            reportFile.parentFile.mkdirs()
         }
-        if (!file.exists()) {
-            file.createNewFile()
+        if (!reportFile.exists()) {
+            reportFile.createNewFile()
         }
-        return file
+        return reportFile
     }
-
 
 }

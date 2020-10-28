@@ -20,8 +20,8 @@ data class SummaryData(
 
 class ScenarioSummary(
     statistics: Collection<Statistics>,
-    startTime: Instant,
-    endTime: Instant,
+    val startTime: Instant,
+    val endTime: Instant,
 ) {
     private val requestStatistics = statistics.filterIsInstance<RequestStatistics>()
     val scenarioDuration: Duration = Duration.between(startTime, endTime)
