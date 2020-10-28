@@ -1,8 +1,8 @@
 package io.perfometer.statistics.consumer
 
+import io.perfometer.internal.helper.toReadableString
 import io.perfometer.statistics.ScenarioSummary
 import io.perfometer.statistics.SummaryData
-import java.time.Duration
 
 internal object StatisticsTextFormatter {
 
@@ -10,7 +10,7 @@ internal object StatisticsTextFormatter {
         return if (summary.totalSummary == null) {
             "===> No requests run! <==="
         } else {
-            """Scenario Duration: ${formatDuration(summary.scenarioDuration)}
+            """Scenario Duration: ${summary.scenarioDuration.toReadableString()}
                 +${printHeader()}
                 +${printSummary(summary.totalSummary)}
                 +${printRequests(summary)}
@@ -39,14 +39,14 @@ internal object StatisticsTextFormatter {
             sd.name,
             sd.requestCount.toString(),
             sd.failedRequestCount.toString(),
-            formatDuration(sd.fastestTime),
-            formatDuration(sd.averageTime),
-            formatDuration(sd.percentile95Time),
-            formatDuration(sd.percentile96Time),
-            formatDuration(sd.percentile97Time),
-            formatDuration(sd.percentile98Time),
-            formatDuration(sd.percentile99Time),
-            formatDuration(sd.slowestTime)
+            sd.fastestTime.toReadableString(),
+            sd.averageTime.toReadableString(),
+            sd.percentile95Time.toReadableString(),
+            sd.percentile96Time.toReadableString(),
+            sd.percentile97Time.toReadableString(),
+            sd.percentile98Time.toReadableString(),
+            sd.percentile99Time.toReadableString(),
+            sd.slowestTime.toReadableString()
         ).joinToString(separator = "", postfix = " |") { printColumn(it) }
     }
 
@@ -57,17 +57,4 @@ internal object StatisticsTextFormatter {
     private fun printColumn(value: String): String {
         return "| ${value.padEnd(15, ' ').substring(0, 15)} "
     }
-
-    private fun formatDuration(duration: Duration): String {
-        val seconds = duration.seconds
-        val positive = String.format(
-            "%d:%02d:%02d.%03d",
-            duration.toHours(),
-            duration.toMinutes() % 60,
-            duration.seconds % 60,
-            duration.toMillis() % 1000
-        )
-        return if (seconds < 0) "-$positive" else positive
-    }
-
 }

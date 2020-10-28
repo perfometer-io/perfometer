@@ -5,6 +5,7 @@ import io.perfometer.http.HttpMethod
 import io.perfometer.http.HttpRequest
 import io.perfometer.http.HttpResponse
 import io.perfometer.http.client.KtorHttpClient
+import io.perfometer.internal.helper.toReadableString
 import io.perfometer.internal.helper.toUrl
 import io.perfometer.runner.CoroutinesScenarioRunner
 import io.perfometer.runner.ScenarioRunner
@@ -134,11 +135,11 @@ class Scenario(
         duration: Duration,
         vararg outputTo: Output = arrayOf(Output.STDOUT)
     ): ScenarioSummary {
+        println("Running scenario for $userCount users and ${duration.toReadableString()} time")
         return runner
             .runUsers(userCount, duration) { builder(HttpDsl(baseURL, runner)) }
             .also { consumeStatistics(it, *outputTo) }
     }
-
 }
 
 fun scenario(
