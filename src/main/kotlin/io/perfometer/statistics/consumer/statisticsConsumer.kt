@@ -9,7 +9,7 @@ fun consumeStatistics(
 
 private fun getStatisticsConsumer(output: Output): (ScenarioSummary) -> Unit {
     return when (output) {
-        Output.STDOUT -> { summary: ScenarioSummary -> StatisticsStdWriter.write(summary) }
+        Output.STDOUT -> { summary: ScenarioSummary -> StatisticsStdOutWriter.write(summary) }
         Output.TEXT_FILE -> { summary: ScenarioSummary -> StatisticsTextFileWriter.write(summary) }
         Output.PDF -> { summary: ScenarioSummary -> devNull(summary) }
         Output.HTML -> { summary: ScenarioSummary -> devNull(summary) }
