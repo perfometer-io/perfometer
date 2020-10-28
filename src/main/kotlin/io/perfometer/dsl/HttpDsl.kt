@@ -7,7 +7,7 @@ import io.perfometer.runner.CoroutinesScenarioRunner
 import io.perfometer.runner.ScenarioRunner
 import io.perfometer.statistics.ScenarioSummary
 import io.perfometer.statistics.consumer.Output
-import io.perfometer.statistics.consumer.getStatisticsConsumer
+import io.perfometer.statistics.consumer.consumeStatistics
 import java.net.URL
 import java.time.Duration
 import java.util.*
@@ -104,7 +104,6 @@ class Scenario(
         private val baseURL: URL,
         private val builder: suspend HttpDsl.() -> Unit,
 ) {
-    private val consumerSelector: (Output) -> (ScenarioSummary) -> Unit = { getStatisticsConsumer(it) }
 
     private var runner: ScenarioRunner = CoroutinesScenarioRunner(KtorHttpClient())
 
@@ -118,15 +117,9 @@ class Scenario(
             vararg outputTo: Output = arrayOf(Output.STDOUT)): ScenarioSummary {
         return runner
                 .runUsers(userCount, duration) { builder(HttpDsl(baseURL, runner)) }
-                .also { consumeStatistics(it, outputTo.toList()) }
+                .also { consumeStatistics(it, *outputTo) }
     }
 
-    private fun consumeStatistics(summary: ScenarioSummary,
-                                  outputs: List<Output>) {
-        for (outputType in outputs) {
-            consumerSelector(outputType)(summary)
-        }
-    }
 }
 
 fun scenario(baseUrlString: String,
