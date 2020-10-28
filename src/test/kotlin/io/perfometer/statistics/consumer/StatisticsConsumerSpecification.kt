@@ -10,6 +10,7 @@ import java.time.Duration
 import java.time.Instant
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertTrue
 
 internal class StatisticsConsumerSpecification {
 
@@ -32,6 +33,6 @@ internal class StatisticsConsumerSpecification {
         consumeStatistics(scenarioStatistics.finish(), Output.TEXT_FILE)
 
         // then a text file should be created
-        Files.exists(reportFilePath)
+        assertTrue { Files.exists(reportFilePath) }
     }
 }
