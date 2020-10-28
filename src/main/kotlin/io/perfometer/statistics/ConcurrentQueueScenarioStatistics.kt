@@ -4,7 +4,7 @@ import java.time.Instant
 import java.util.concurrent.ConcurrentLinkedQueue
 
 internal class ConcurrentQueueScenarioStatistics(
-        private val startTime: Instant,
+    private val startTime: Instant,
 ) : ScenarioStatistics {
     private val scenarioStats = ConcurrentLinkedQueue<Statistics>()
     private var finished = false

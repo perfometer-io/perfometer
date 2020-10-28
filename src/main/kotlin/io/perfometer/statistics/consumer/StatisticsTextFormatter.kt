@@ -19,31 +19,35 @@ internal object StatisticsTextFormatter {
     }
 
     private fun printHeader(): String {
-        return arrayOf("REQUEST",
-                "COUNT",
-                "FAILED COUNT",
-                "FASTEST TIME",
-                "AVERAGE TIME",
-                "95th PERCENTILE",
-                "96th PERCENTILE",
-                "97th PERCENTILE",
-                "98th PERCENTILE",
-                "99th PERCENTILE",
-                "SLOWEST TIME").joinToString(separator = "") { printColumn(it) }
+        return arrayOf(
+            "REQUEST",
+            "COUNT",
+            "FAILED COUNT",
+            "FASTEST TIME",
+            "AVERAGE TIME",
+            "95th PERCENTILE",
+            "96th PERCENTILE",
+            "97th PERCENTILE",
+            "98th PERCENTILE",
+            "99th PERCENTILE",
+            "SLOWEST TIME"
+        ).joinToString(separator = "") { printColumn(it) }
     }
 
     private fun printSummary(sd: SummaryData): String {
-        return arrayOf(sd.name,
-                sd.requestCount.toString(),
-                sd.failedRequestCount.toString(),
-                formatDuration(sd.fastestTime),
-                formatDuration(sd.averageTime),
-                formatDuration(sd.percentile95Time),
-                formatDuration(sd.percentile96Time),
-                formatDuration(sd.percentile97Time),
-                formatDuration(sd.percentile98Time),
-                formatDuration(sd.percentile99Time),
-                formatDuration(sd.slowestTime)).joinToString(separator = "") { printColumn(it) }
+        return arrayOf(
+            sd.name,
+            sd.requestCount.toString(),
+            sd.failedRequestCount.toString(),
+            formatDuration(sd.fastestTime),
+            formatDuration(sd.averageTime),
+            formatDuration(sd.percentile95Time),
+            formatDuration(sd.percentile96Time),
+            formatDuration(sd.percentile97Time),
+            formatDuration(sd.percentile98Time),
+            formatDuration(sd.percentile99Time),
+            formatDuration(sd.slowestTime)
+        ).joinToString(separator = "") { printColumn(it) }
     }
 
     private fun printRequests(summary: ScenarioSummary): String {
@@ -57,11 +61,12 @@ internal object StatisticsTextFormatter {
     private fun formatDuration(duration: Duration): String {
         val seconds = duration.seconds
         val positive = String.format(
-                "%d:%02d:%02d.%03d",
-                duration.toHours(),
-                duration.toMinutes() % 60,
-                duration.seconds % 60,
-                duration.toMillis() % 1000)
+            "%d:%02d:%02d.%03d",
+            duration.toHours(),
+            duration.toMinutes() % 60,
+            duration.seconds % 60,
+            duration.toMillis() % 1000
+        )
         return if (seconds < 0) "-$positive" else positive
     }
 

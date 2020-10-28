@@ -8,8 +8,10 @@ fun main() {
 
     scenario("http://example.com") {
         // Provide your scenario here
-    }.run(userCount = 10,
-            duration = Duration.ofSeconds(10),
-            outputTo = arrayOf(Output.STDOUT))
+    }.run(
+        userCount = 10,
+        duration = Duration.ofSeconds(10),
+        outputTo = arrayOf(Output.STDOUT)
+    )
 
 }

@@ -5,7 +5,7 @@ import java.net.URL
 
 internal fun String.toUrl(): URL {
     return try {
-         URL(this)
+        URL(this)
     } catch (e: Exception) {
         throw InvalidScenarioConfigurationException("Invalid URL string", e)
     }

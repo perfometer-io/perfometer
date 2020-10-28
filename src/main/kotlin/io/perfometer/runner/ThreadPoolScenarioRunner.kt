@@ -1,28 +1,32 @@
 package io.perfometer.runner
 
-import io.perfometer.dsl.*
+import io.perfometer.dsl.HttpStep
+import io.perfometer.dsl.PauseStep
+import io.perfometer.dsl.RequestStep
 import io.perfometer.http.client.HttpClient
 import io.perfometer.statistics.PauseStatistics
 import io.perfometer.statistics.ScenarioSummary
 import kotlinx.coroutines.runBlocking
 import java.time.Duration
-import java.util.concurrent.*
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 internal class ThreadPoolScenarioRunner(
-        httpClient: HttpClient,
+    httpClient: HttpClient,
 ) : BaseScenarioRunner(httpClient) {
 
     override fun runUsers(
-            userCount: Int,
-            duration: Duration,
-            action: suspend () -> Unit,
+        userCount: Int,
+        duration: Duration,
+        action: suspend () -> Unit,
     ): ScenarioSummary {
         val scenarioExecutor = Executors.newFixedThreadPool(userCount)
 
         val future = CompletableFuture.allOf(
-                *(0 until userCount)
-                        .map { CompletableFuture.runAsync({ runAction(action) }, scenarioExecutor) }
-                        .toTypedArray())
+            *(0 until userCount)
+                .map { CompletableFuture.runAsync({ runAction(action) }, scenarioExecutor) }
+                .toTypedArray())
 
         Executors.newSingleThreadScheduledExecutor().schedule({
             scenarioExecutor.shutdownNow()

@@ -1,6 +1,8 @@
 package io.perfometer.runner
 
-import io.perfometer.dsl.*
+import io.perfometer.dsl.HttpStep
+import io.perfometer.dsl.PauseStep
+import io.perfometer.dsl.RequestStep
 import io.perfometer.http.client.HttpClient
 import io.perfometer.statistics.PauseStatistics
 import io.perfometer.statistics.ScenarioSummary
@@ -10,14 +12,14 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.toKotlinDuration
 
 internal class CoroutinesScenarioRunner(
-        httpClient: HttpClient,
+    httpClient: HttpClient,
 ) : BaseScenarioRunner(httpClient) {
 
     @ExperimentalTime
     override fun runUsers(
-            userCount: Int,
-            duration: Duration,
-            action: suspend () -> Unit,
+        userCount: Int,
+        duration: Duration,
+        action: suspend () -> Unit,
     ): ScenarioSummary {
         runBlocking(Dispatchers.Default) {
             (1..userCount).map {

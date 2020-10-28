@@ -9,8 +9,8 @@ import java.time.Duration
 import java.time.Instant
 
 abstract class BaseScenarioRunner(
-        private val httpClient: HttpClient,
-        val statistics: ScenarioStatistics = ConcurrentQueueScenarioStatistics(Instant.now()),
+    private val httpClient: HttpClient,
+    val statistics: ScenarioStatistics = ConcurrentQueueScenarioStatistics(Instant.now()),
 ) : ScenarioRunner {
 
     protected suspend fun executeHttp(requestStep: RequestStep) {
@@ -19,12 +19,14 @@ abstract class BaseScenarioRunner(
         val response = httpClient.executeHttp(request)
         val timeElapsed = Duration.between(startTime, Instant.now())
         request.consumer(response)
-        statistics.gather(RequestStatistics(
+        statistics.gather(
+            RequestStatistics(
                 request.name,
                 request.method,
                 request.pathWithParams,
                 timeElapsed,
-                response.status)
+                response.status
+            )
         )
     }
 }

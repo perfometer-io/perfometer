@@ -3,8 +3,8 @@ package io.perfometer.statistics.consumer
 import io.perfometer.statistics.ScenarioSummary
 
 fun consumeStatistics(
-        summary: ScenarioSummary,
-        vararg outputs: Output,
+    summary: ScenarioSummary,
+    vararg outputs: Output,
 ) = outputs.forEach { getStatisticsConsumer(it)(summary) }
 
 private fun getStatisticsConsumer(output: Output): (ScenarioSummary) -> Unit {

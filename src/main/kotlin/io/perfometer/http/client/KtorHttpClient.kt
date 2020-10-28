@@ -16,13 +16,16 @@ class KtorHttpClient : HttpClient {
 
     override suspend fun executeHttp(request: HttpRequest): HttpResponse {
         val ktorResponse = httpClient.request<KtorHttpResponse>(
-                URL(request.url, request.pathWithParams)) {
+            URL(request.url, request.pathWithParams)
+        ) {
             method = HttpMethod.parse(request.method.toString())
             request.headers.forEach { (name, value) -> header(name, value) }
             body = request.body
         }
-        return HttpResponse(status = HttpStatus(ktorResponse.status.value),
-                            headers = ktorResponse.headers.toMap().mapValues { it.value.joinToString(",") },
-                            body = ktorResponse.content.toByteArray())
+        return HttpResponse(
+            status = HttpStatus(ktorResponse.status.value),
+            headers = ktorResponse.headers.toMap().mapValues { it.value.joinToString(",") },
+            body = ktorResponse.content.toByteArray()
+        )
     }
 }

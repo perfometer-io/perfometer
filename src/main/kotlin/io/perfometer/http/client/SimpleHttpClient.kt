@@ -6,7 +6,7 @@ import io.perfometer.http.HttpStatus
 import java.net.HttpURLConnection
 
 class SimpleHttpClient(
-        private val trustAllCertificates: Boolean,
+    private val trustAllCertificates: Boolean,
 ) : HttpClient {
 
     override suspend fun executeHttp(request: HttpRequest): HttpResponse {
@@ -17,8 +17,8 @@ class SimpleHttpClient(
             connection = createHttpConnectionForRequest(request)
             connection.connect()
             headers = connection.headerFields
-                    .map { it.key to it.value.joinToString(",") }
-                    .toMap()
+                .map { it.key to it.value.joinToString(",") }
+                .toMap()
             body = connection.inputStream.readBytes()
         } catch (ignored: Exception) {
             ignored.printStackTrace()
