@@ -11,11 +11,11 @@ private fun getStatisticsConsumer(output: Output): (ScenarioSummary) -> Unit {
     return when (output) {
         Output.STDOUT -> { summary: ScenarioSummary -> StatisticsStdOutWriter.write(summary) }
         Output.TEXT_FILE -> { summary: ScenarioSummary -> StatisticsTextFileWriter.write(summary) }
-        Output.PDF -> { summary: ScenarioSummary -> devNull(summary) }
-        Output.HTML -> { summary: ScenarioSummary -> devNull(summary) }
+        Output.PDF -> { _: ScenarioSummary -> devNull() }
+        Output.HTML -> { _: ScenarioSummary -> devNull() }
     }
 }
 
-private fun devNull(scenarioSummary: ScenarioSummary) {
+private fun devNull() {
     TODO("Not yet implemented")
 }
