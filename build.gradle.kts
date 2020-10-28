@@ -19,9 +19,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.kotlinCoroutines}")
     implementation("io.ktor:ktor-client-cio:${Versions.ktor}")
 
-    implementation("org.jetbrains.kotlin:kotlin-scripting-common:${Versions.kotest}")
-    implementation("org.jetbrains.kotlin:kotlin-scripting-jvm:${Versions.kotest}")
-    implementation("org.jetbrains.kotlin:kotlin-scripting-jvm-host:${Versions.kotest}")
+    implementation("org.jetbrains.kotlin:kotlin-scripting-common:${Versions.kotlin}")
+    implementation("org.jetbrains.kotlin:kotlin-scripting-jvm:${Versions.kotlin}")
+    implementation("org.jetbrains.kotlin:kotlin-scripting-jvm-host:${Versions.kotlin}")
 
     testImplementation(kotlin("test-junit"))
     testImplementation("io.kotest:kotest-runner-junit5:${Versions.kotest}")
