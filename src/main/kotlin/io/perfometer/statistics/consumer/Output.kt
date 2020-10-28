@@ -1,5 +1,5 @@
 package io.perfometer.statistics.consumer
 
-enum class Output {
-    STDOUT, TEXT_FILE, HTML, PDF
+enum class Output(val fileExtension: String? = null) {
+    STDOUT, TEXT_FILE(".txt"), HTML(".html"), PDF(".pdf")
 }
