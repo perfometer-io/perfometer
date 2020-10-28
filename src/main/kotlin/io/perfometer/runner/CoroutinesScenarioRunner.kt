@@ -12,11 +12,15 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.toKotlinDuration
 
 internal class CoroutinesScenarioRunner(
-        httpClient: HttpClient,
+    httpClient: HttpClient,
 ) : BaseScenarioRunner(httpClient) {
 
     @ExperimentalTime
-    override fun runUsers(userCount: Int, duration: Duration, action: suspend () -> Unit): ScenarioSummary {
+    override fun runUsers(
+        userCount: Int,
+        duration: Duration,
+        action: suspend () -> Unit,
+    ): ScenarioSummary {
         runBlocking(Dispatchers.Default) {
             (1..userCount).map {
                 launch {

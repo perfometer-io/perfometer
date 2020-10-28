@@ -6,10 +6,7 @@ import io.kotest.matchers.comparables.shouldBeGreaterThanOrEqualTo
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.perfometer.dsl.scenario
-import io.perfometer.http.HttpMethod
-import io.perfometer.http.HttpRequest
-import io.perfometer.http.HttpResponse
-import io.perfometer.http.HttpStatus
+import io.perfometer.http.*
 import io.perfometer.http.client.HttpClient
 import org.junit.Test
 import java.time.Duration
@@ -38,7 +35,7 @@ abstract class ScenarioRunnerSpecification {
             }
         }.runner(runner).run(1, Duration.ofMillis(100))
 
-        requests.size shouldBeGreaterThan  0
+        requests.size shouldBeGreaterThan 0
         requests.map { it.url.toString() }.filter { it != "https://perfometer.io" } shouldHaveSize 0
         requests.map { it.method }.filter { it != HttpMethod.GET } shouldHaveSize 0
         requests.map { it.pathWithParams }.filter { it != "/" } shouldHaveSize 0
@@ -78,7 +75,7 @@ abstract class ScenarioRunnerSpecification {
         }.runner(runner).run(1, Duration.ofMillis(2100))
 
         val diff = System.currentTimeMillis() - startTime
-        diff shouldBeGreaterThanOrEqualTo  2000L
+        diff shouldBeGreaterThanOrEqualTo 2000L
         summary.totalSummary.shouldBeNull()
     }
 }

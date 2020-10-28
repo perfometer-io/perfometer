@@ -13,16 +13,20 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 internal class ThreadPoolScenarioRunner(
-        httpClient: HttpClient,
+    httpClient: HttpClient,
 ) : BaseScenarioRunner(httpClient) {
 
-    override fun runUsers(userCount: Int, duration: Duration, action: suspend () -> Unit): ScenarioSummary {
+    override fun runUsers(
+        userCount: Int,
+        duration: Duration,
+        action: suspend () -> Unit,
+    ): ScenarioSummary {
         val scenarioExecutor = Executors.newFixedThreadPool(userCount)
 
         val future = CompletableFuture.allOf(
-                *(0 until userCount)
-                        .map { CompletableFuture.runAsync({ runAction(action) }, scenarioExecutor) }
-                        .toTypedArray())
+            *(0 until userCount)
+                .map { CompletableFuture.runAsync({ runAction(action) }, scenarioExecutor) }
+                .toTypedArray())
 
         Executors.newSingleThreadScheduledExecutor().schedule({
             scenarioExecutor.shutdownNow()

@@ -12,14 +12,14 @@ import java.time.Duration
 sealed class Statistics
 
 data class RequestStatistics(
-        val name: String,
-        val method: HttpMethod,
-        val pathWithParams: String,
-        val timeTaken: Duration,
-        val httpStatus: HttpStatus,
+    val name: String,
+    val method: HttpMethod,
+    val pathWithParams: String,
+    val timeTaken: Duration,
+    val httpStatus: HttpStatus,
 ) : Statistics()
 
 internal data class PauseStatistics(
-        val duration: Duration,
+    val duration: Duration,
 ) : Statistics()
 

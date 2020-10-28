@@ -100,7 +100,7 @@ class ScenarioSummarySpecification {
         val summary = ScenarioSummary(setOf(RequestStatistics("GET", HttpMethod.GET, "", Duration.ofMillis(100), ok)),
                 start,
                 end)
-        summary.scenarioTime shouldBe Duration.between(start, end)
+        summary.scenarioDuration shouldBe Duration.between(start, end)
     }
 
     @Test

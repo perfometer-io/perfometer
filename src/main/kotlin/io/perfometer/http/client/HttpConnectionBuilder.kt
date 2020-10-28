@@ -26,8 +26,8 @@ object TrustAllSslSocketFactoryProvider {
 }
 
 internal class HttpConnectionBuilder(
-        url: URL,
-        path: String,
+    url: URL,
+    path: String,
 ) {
 
     val connection = URL(url, path).openConnection() as HttpURLConnection
@@ -56,8 +56,9 @@ internal class HttpConnectionBuilder(
     }
 }
 
-internal fun httpConnection(baseUrl: URL,
-                            path: String,
-                            builder: HttpConnectionBuilder.() -> Unit):
-        HttpURLConnection = HttpConnectionBuilder(baseUrl, path).apply(builder).connection
+internal fun httpConnection(
+    baseUrl: URL,
+    path: String,
+    builder: HttpConnectionBuilder.() -> Unit
+): HttpURLConnection = HttpConnectionBuilder(baseUrl, path).apply(builder).connection
 

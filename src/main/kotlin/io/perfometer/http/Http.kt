@@ -12,7 +12,7 @@ enum class HttpMethod {
 }
 
 data class HttpStatus(
-        val code: Int,
+    val code: Int,
 ) {
 
     val generalError: Boolean
@@ -37,6 +37,11 @@ data class HttpStatus(
         get() = !isCodeIn(100..599)
 
     private fun isCodeIn(range: IntRange) = code in range
+
+    override fun toString(): String {
+        return "HttpStatus: $code"
+    }
+
 }
 
 object HttpHeaders {
@@ -44,15 +49,21 @@ object HttpHeaders {
     const val CONTENT_TYPE = "Content-Type"
 }
 
-data class HttpRequest(val name: String,
-                       val method: HttpMethod,
-                       val url: URL,
-                       val pathWithParams: String,
-                       val headers: Map<String, String>,
-                       val body: ByteArray,
-                       val consumer: (HttpResponse) -> Unit)
+data class HttpRequest(
+    val name: String,
+    val method: HttpMethod,
+    val url: URL,
+    val pathWithParams: String,
+    val headers: Map<String, String>,
+    val body: ByteArray,
+    val consumer: (HttpResponse) -> Unit
+)
 
-class HttpResponse(val status: HttpStatus, val headers: Map<String, String>, val body: ByteArray = byteArrayOf()) {
+class HttpResponse(
+    val status: HttpStatus,
+    val headers: Map<String, String>,
+    val body: ByteArray = byteArrayOf()
+) {
 
     private fun charsetFromContentType(): Charset {
         return headers[HttpHeaders.CONTENT_TYPE]?.substringAfterLast("charset=")?.let {
