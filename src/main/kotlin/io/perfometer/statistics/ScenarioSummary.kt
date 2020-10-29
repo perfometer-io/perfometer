@@ -1,5 +1,6 @@
 package io.perfometer.statistics
 
+import io.perfometer.internal.helper.toReadableString
 import java.time.Duration
 import java.time.Instant
 import kotlin.math.ceil
@@ -16,7 +17,42 @@ data class SummaryData(
     val percentile98Time: Duration,
     val percentile99Time: Duration,
     val slowestTime: Duration,
-)
+) {
+
+    val printableValues: Array<String> = arrayOf(
+        name,
+        requestCount.toString(),
+        failedRequestCount.toString(),
+        fastestTime.toReadableString(),
+        averageTime.toReadableString(),
+        percentile95Time.toReadableString(),
+        percentile96Time.toReadableString(),
+        percentile97Time.toReadableString(),
+        percentile98Time.toReadableString(),
+        percentile99Time.toReadableString(),
+        slowestTime.toReadableString()
+    )
+
+    fun <R> mapPrintableValues(valueMapper: (String) -> R): List<R> = printableValues.map(valueMapper)
+
+    companion object {
+        val headerNames: Array<String> = arrayOf(
+            "REQUEST",
+            "COUNT",
+            "FAILED COUNT",
+            "FASTEST TIME",
+            "AVERAGE TIME",
+            "95th PERCENTILE",
+            "96th PERCENTILE",
+            "97th PERCENTILE",
+            "98th PERCENTILE",
+            "99th PERCENTILE",
+            "SLOWEST TIME"
+        )
+
+        fun <R> mapHeaders(headerMapper: (String) -> R): List<R> = headerNames.map(headerMapper)
+    }
+}
 
 class ScenarioSummary(
     statistics: Collection<Statistics>,

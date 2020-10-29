@@ -1,6 +1,5 @@
 package io.perfometer.statistics.consumer
 
-import io.perfometer.internal.helper.toReadableString
 import io.perfometer.internal.helper.toZonedDateTimeUTC
 import io.perfometer.statistics.ScenarioSummary
 import io.perfometer.statistics.SummaryData
@@ -66,37 +65,13 @@ internal object StatisticsHtmlFileWriter : StatisticsFileWriter() {
 
     private fun TABLE.printHeader() {
         tr(classes = "header") {
-            arrayOf(
-                "REQUEST",
-                "COUNT",
-                "FAILED COUNT",
-                "FASTEST TIME",
-                "AVERAGE TIME",
-                "95th PERCENTILE",
-                "96th PERCENTILE",
-                "97th PERCENTILE",
-                "98th PERCENTILE",
-                "99th PERCENTILE",
-                "SLOWEST TIME"
-            ).map { header -> td { text(header) } }
+            SummaryData.mapHeaders { header -> td { text(header) } }
         }
     }
 
     private fun TABLE.printSummary(summaryData: SummaryData) {
         tr(classes = "summary") {
-            arrayOf(
-                summaryData.name,
-                summaryData.requestCount.toString(),
-                summaryData.failedRequestCount.toString(),
-                summaryData.fastestTime.toReadableString(),
-                summaryData.averageTime.toReadableString(),
-                summaryData.percentile95Time.toReadableString(),
-                summaryData.percentile96Time.toReadableString(),
-                summaryData.percentile97Time.toReadableString(),
-                summaryData.percentile98Time.toReadableString(),
-                summaryData.percentile99Time.toReadableString(),
-                summaryData.slowestTime.toReadableString()
-            ).map { summaryValue -> td { text(summaryValue) } }
+            summaryData.mapPrintableValues { pv -> td { text(pv) } }
         }
     }
 
