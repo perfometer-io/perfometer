@@ -12,7 +12,7 @@ private fun getStatisticsConsumer(output: Output): (ScenarioSummary) -> Unit {
         Output.STDOUT -> { summary: ScenarioSummary -> StatisticsStdOutWriter.write(summary) }
         Output.TEXT_FILE -> { summary: ScenarioSummary -> StatisticsTextFileWriter.write(summary) }
         Output.PDF -> { _: ScenarioSummary -> devNull() }
-        Output.HTML -> { _: ScenarioSummary -> devNull() }
+        Output.HTML -> { summary: ScenarioSummary -> StatisticsHtmlFileWriter.write(summary) }
     }
 }
 

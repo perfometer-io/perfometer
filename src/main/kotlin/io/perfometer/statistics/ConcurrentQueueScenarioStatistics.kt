@@ -14,8 +14,9 @@ internal class ConcurrentQueueScenarioStatistics(
         return ScenarioSummary(scenarioStats, startTime, Instant.now())
     }
 
-    override fun gather(statistics: Statistics) {
+    override fun gather(statistics: Statistics): ScenarioStatistics {
         check(!finished) { "Scenario already finished" }
         this.scenarioStats.add(statistics)
+        return this
     }
 }

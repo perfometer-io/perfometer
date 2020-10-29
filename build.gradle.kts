@@ -11,13 +11,20 @@ object Versions {
     const val kotlinCoroutines = "1.4.0-M1"
     const val ktor = "1.4.0"
     const val kotest = "4.3.0"
+    const val kotlinHtml = "0.7.2"
+}
+
+repositories {
+    mavenCentral()
+    jcenter()
 }
 
 
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.kotlinCoroutines}")
     implementation("io.ktor:ktor-client-cio:${Versions.ktor}")
+    implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:${Versions.kotlinHtml}")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.kotlinCoroutines}")
 
     implementation("org.jetbrains.kotlin:kotlin-scripting-common:${Versions.kotlin}")
     implementation("org.jetbrains.kotlin:kotlin-scripting-jvm:${Versions.kotlin}")
@@ -27,10 +34,6 @@ dependencies {
     testImplementation("io.kotest:kotest-runner-junit5:${Versions.kotest}")
     testImplementation("io.ktor:ktor-server-core:${Versions.ktor}")
     testImplementation("io.ktor:ktor-server-netty:${Versions.ktor}")
-}
-
-repositories {
-    mavenCentral()
 }
 
 val compileKotlin: KotlinCompile by tasks

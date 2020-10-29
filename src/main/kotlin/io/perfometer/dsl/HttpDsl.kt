@@ -11,6 +11,7 @@ import io.perfometer.runner.CoroutinesScenarioRunner
 import io.perfometer.runner.ScenarioRunner
 import io.perfometer.statistics.ScenarioSummary
 import io.perfometer.statistics.consumer.Output
+import io.perfometer.statistics.consumer.Output.STDOUT
 import io.perfometer.statistics.consumer.consumeStatistics
 import java.net.URL
 import java.time.Duration
@@ -133,7 +134,7 @@ class Scenario(
     fun run(
         userCount: Int,
         duration: Duration,
-        vararg outputTo: Output = arrayOf(Output.STDOUT)
+        vararg outputTo: Output = arrayOf(STDOUT)
     ): ScenarioSummary {
         println("Running scenario for $userCount users and ${duration.toReadableString()} time")
         return runner

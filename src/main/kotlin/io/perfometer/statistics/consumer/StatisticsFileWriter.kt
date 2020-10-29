@@ -1,22 +1,33 @@
 package io.perfometer.statistics.consumer
 
+import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-enum class FileTypeExtension(val fileExtension: String) {
-    TXT(".txt"), PDF(".pdf"), HTML(".html")
-}
-
 abstract class StatisticsFileWriter {
 
-    protected fun buildFilePath(
+    protected fun createReportFile(
         startTime: ZonedDateTime,
-        extension: FileTypeExtension,
+        output: Output,
+    ): File {
+        val reportFile = buildFilePath(startTime, output).toFile()
+        if (!reportFile.parentFile.exists()) {
+            reportFile.parentFile.mkdirs()
+        }
+        if (!reportFile.exists()) {
+            reportFile.createNewFile()
+        }
+        return reportFile
+    }
+
+    private fun buildFilePath(
+        startTime: ZonedDateTime,
+        output: Output,
     ): Path {
         return Paths.get(
-            "${System.getProperty("user.dir")}/reports/report-${dateTimeFormatter.format(startTime)}${extension.fileExtension}"
+            "${System.getProperty("user.dir")}/reports/report-${dateTimeFormatter.format(startTime)}${output.fileExtension}"
         )
     }
 
