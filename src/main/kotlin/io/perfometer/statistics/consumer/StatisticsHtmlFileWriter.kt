@@ -29,7 +29,7 @@ internal object StatisticsHtmlFileWriter : StatisticsFileWriter() {
                     table {
                         printHeader()
                         printSummary(totalSummary)
-                        summary.summaries.forEach { s -> printSummary(s) }
+                        printRequests(summary.summaries)
                     }
                 }
                 style {
@@ -73,6 +73,10 @@ internal object StatisticsHtmlFileWriter : StatisticsFileWriter() {
         tr(classes = "summary") {
             summaryData.mapPrintableValues { pv -> td { text(pv) } }
         }
+    }
+
+    private fun TABLE.printRequests(summaries: List<SummaryData>) {
+        summaries.forEach { s -> printSummary(s) }
     }
 
 }
