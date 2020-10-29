@@ -19,12 +19,12 @@ internal class StatisticsConsumerSpecification {
 
     @BeforeTest
     fun setup() {
-        removeReportsFiles()
+        removeReportFiles()
     }
 
     @AfterTest
     fun cleanup() {
-        removeReportsFiles()
+        removeReportFiles()
     }
 
     @Test
@@ -41,6 +41,7 @@ internal class StatisticsConsumerSpecification {
         val reportPath =
             reportDirectoryPath.resolve("report-${timestamp}${TEXT_FILE.fileExtension}")
         assertTrue { Files.exists(reportPath) }
+        assertTrue { Files.lines(reportPath).count() >= 3 }
     }
 
     @Test
@@ -56,9 +57,10 @@ internal class StatisticsConsumerSpecification {
         val timestamp = dateTimeFormatter.format(scenarioSummary.startTime.toZonedDateTimeUTC())
         val reportPath = reportDirectoryPath.resolve("report-${timestamp}${HTML.fileExtension}")
         assertTrue { Files.exists(reportPath) }
+        assertTrue { Files.lines(reportPath).count() >= 3 }
     }
 
-    private fun removeReportsFiles() {
+    private fun removeReportFiles() {
         if (Files.exists(reportDirectoryPath)) {
             val files = reportDirectoryPath.toFile().listFiles() ?: emptyArray()
             files.forEach { it.delete() }
