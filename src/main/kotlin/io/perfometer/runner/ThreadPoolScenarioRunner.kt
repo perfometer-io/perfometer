@@ -4,6 +4,7 @@ import io.perfometer.dsl.HttpStep
 import io.perfometer.dsl.PauseStep
 import io.perfometer.dsl.RequestStep
 import io.perfometer.http.client.HttpClient
+import io.perfometer.http.client.HttpClientFactory
 import io.perfometer.statistics.PauseStatistics
 import io.perfometer.statistics.ScenarioSummary
 import kotlinx.coroutines.runBlocking
@@ -13,8 +14,10 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 internal class ThreadPoolScenarioRunner(
-    httpClient: HttpClient,
-) : BaseScenarioRunner(httpClient) {
+    httpClientFactory: HttpClientFactory,
+) : BaseScenarioRunner(httpClientFactory) {
+
+    private val httpClient = ThreadLocal<HttpClient>()
 
     override fun runUsers(
         userCount: Int,
@@ -37,6 +40,7 @@ internal class ThreadPoolScenarioRunner(
     }
 
     private fun runAction(action: suspend () -> Unit) {
+        httpClient.set(httpClientFactory())
         runBlocking {
             while (!Thread.currentThread().isInterrupted) {
                 try {
@@ -50,7 +54,7 @@ internal class ThreadPoolScenarioRunner(
 
     override suspend fun runStep(step: HttpStep) {
         when (step) {
-            is RequestStep -> executeHttp(step)
+            is RequestStep -> executeHttp(httpClient.get(), step)
             is PauseStep -> pauseFor(step.duration)
         }
     }

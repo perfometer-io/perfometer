@@ -59,8 +59,10 @@ internal class HttpDslSpecification {
             }
             get {
                 path("/path")
-                params("foo" to "bar",
-                        "bar" to "baz")
+                params(
+                    "foo" to "bar",
+                    "bar" to "baz"
+                )
             }
         }.runner(runner).run(1, Duration.ZERO)
 
@@ -68,7 +70,7 @@ internal class HttpDslSpecification {
         when (val step1 = runner.steps[0]) {
             is RequestStep -> {
                 step1.request.pathWithParams shouldBe "/"
-                step1.request.headers shouldBe mapOf("x-foo" to "bar")
+                step1.request.headers shouldBe mapOf("x-foo" to listOf("bar"))
             }
             else -> fail("Expected RequestStep")
         }
@@ -136,9 +138,9 @@ internal class HttpDslSpecification {
         }.runner(runner).run(1, Duration.ZERO)
 
         val securedRequestsCount = runner.steps.filterIsInstance<RequestStep>()
-                .flatMap { it.request.headers.entries }
-                .filter { header -> header.key == HttpHeaders.AUTHORIZATION && header.value == "Basic $credentialsEncoded" }
-                .count()
+            .flatMap { it.request.headers.entries }
+            .filter { header -> header.key == HttpHeaders.AUTHORIZATION && header.value[0] == "Basic $credentialsEncoded" }
+            .count()
         securedRequestsCount shouldBe runner.steps.size
     }
 
@@ -161,9 +163,9 @@ internal class HttpDslSpecification {
         }.runner(runner).run(1, Duration.ZERO)
 
         val requestsCount = runner.steps.filterIsInstance<RequestStep>()
-                .flatMap { it.request.headers.entries }
-                .filter { header -> header.key == name && header.value == value }
-                .count()
+            .flatMap { it.request.headers.entries }
+            .filter { header -> header.key == name && header.value[0] == value }
+            .count()
         requestsCount shouldBe runner.steps.size
     }
 
@@ -208,23 +210,25 @@ internal class HttpDslSpecification {
         }.runner(runner).run(1, Duration.ZERO);
 
         val headers = runner.steps.filterIsInstance<RequestStep>()
-                .flatMap { it.request.headers.entries }
+            .flatMap { it.request.headers.entries }
         headers.size shouldBe 1
         headers[0].key shouldBe "Accept"
-        headers[0].value shouldBe "application/json"
+        headers[0].value shouldBe listOf("application/json")
     }
 
     @Test
     fun `should add multiple headers to request`() {
         scenario("https://perfometer.io") {
             get {
-                headers("User-Agent" to "perfometer",
-                        "Accept" to "application/json")
+                headers(
+                    "User-Agent" to "perfometer",
+                    "Accept" to "application/json"
+                )
             }
         }.runner(runner).run(1, Duration.ZERO)
 
         val headers = runner.steps.filterIsInstance<RequestStep>()
-                .flatMap { it.request.headers.entries }
+            .flatMap { it.request.headers.entries }
         headers.size shouldBe 2
     }
 
@@ -242,5 +246,42 @@ internal class HttpDslSpecification {
             }
             else -> fail("Expected RequestStep")
         }
+    }
+
+    @Test
+    fun `should encode params`() {
+        scenario("https://perfometer.io") {
+            get {
+                path("/path")
+                params(
+                    "foo" to "bar baz",
+                    "bar" to "foo=for",
+                )
+            }
+        }.runner(runner).run(1, Duration.ZERO)
+
+        runner.steps.size shouldBe 1
+        when (val step1 = runner.steps[0]) {
+            is RequestStep -> {
+                step1.request.pathWithParams shouldBe "/path?foo=bar+baz&bar=foo%3Dfor"
+            }
+            else -> fail("Expected RequestStep")
+        }
+    }
+
+    @Test
+    fun `should allow multiple headers with the same name in request`() {
+        scenario("https://perfometer.io") {
+            get {
+                headers("Accept" to "application/json")
+                headers("Accept" to "application/xml")
+            }
+        }.runner(runner).run(1, Duration.ZERO);
+
+        val headers = runner.steps.filterIsInstance<RequestStep>()
+            .flatMap { it.request.headers.entries }
+        headers.size shouldBe 1
+        headers[0].key shouldBe "Accept"
+        headers[0].value shouldBe listOf("application/json", "application/xml")
     }
 }

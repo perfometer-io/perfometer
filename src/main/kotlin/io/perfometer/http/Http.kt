@@ -46,7 +46,10 @@ data class HttpStatus(
 
 object HttpHeaders {
     const val AUTHORIZATION = "Authorization"
+    const val COOKIE = "Cookie"
+
     const val CONTENT_TYPE = "Content-Type"
+    const val SET_COOKIE = "Set-Cookie"
 }
 
 data class HttpRequest(
@@ -54,19 +57,19 @@ data class HttpRequest(
     val method: HttpMethod,
     val url: URL,
     val pathWithParams: String,
-    val headers: Map<String, String>,
+    val headers: Map<String, List<String>>,
     val body: ByteArray,
     val consumer: (HttpResponse) -> Unit
 )
 
 class HttpResponse(
     val status: HttpStatus,
-    val headers: Map<String, String>,
+    val headers: Map<String, List<String>>,
     val body: ByteArray = byteArrayOf()
 ) {
 
     private fun charsetFromContentType(): Charset {
-        return headers[HttpHeaders.CONTENT_TYPE]?.substringAfterLast("charset=")?.let {
+        return headers[HttpHeaders.CONTENT_TYPE]?.first()?.substringAfterLast("charset=")?.let {
             if (Charset.isSupported(it)) Charset.forName(it) else null
         } ?: Charsets.UTF_8
     }

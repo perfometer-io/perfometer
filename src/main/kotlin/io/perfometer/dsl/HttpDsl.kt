@@ -14,6 +14,7 @@ import io.perfometer.statistics.consumer.Output
 import io.perfometer.statistics.consumer.Output.STDOUT
 import io.perfometer.statistics.consumer.consumeStatistics
 import java.net.URL
+import java.net.URLEncoder
 import java.time.Duration
 import java.util.*
 
@@ -27,11 +28,11 @@ typealias HttpParam = Pair<String, String>
 class RequestDsl(
     private val url: URL,
     private val method: HttpMethod,
-    initialHeaders: Map<String, String>
+    private val initialHeaders: Map<String, List<String>>
 ) {
     private var name: String? = null
     private var path: String = ""
-    private val headers = initialHeaders.toMutableMap()
+    private val headers = mutableMapOf<String, List<String>>()
     private val params = mutableListOf<HttpParam>()
     private var body: ByteArray = ByteArray(0)
     private var consumer: (HttpResponse) -> Unit = {}
@@ -49,7 +50,9 @@ class RequestDsl(
     }
 
     fun headers(vararg headers: HttpHeader) {
-        this.headers.putAll(headers)
+        headers.forEach {
+            this.headers.merge(it.first, listOf(it.second)) { l1, l2 -> l1 + l2 }
+        }
     }
 
     fun params(vararg params: HttpParam) {
@@ -66,22 +69,28 @@ class RequestDsl(
 
     private fun paramsToString(): String {
         return if (this.params.isNotEmpty())
-            this.params.joinToString("&", "?") { "${it.first}=${it.second}" }
+            this.params.joinToString("&", "?") { "${encode(it.first)}=${encode(it.second)}" }
         else ""
     }
 
+    private fun encode(s: String): String = URLEncoder.encode(s, Charsets.UTF_8.toString())
+
+    private fun headers(): Map<String, List<String>> = initialHeaders + headers
+
     fun build() =
-        HttpRequest(name ?: "$method $path", method, url, pathWithParams(), headers, body, consumer)
+        HttpRequest(name ?: "$method $path", method, url, pathWithParams(), headers(), body, consumer)
 }
 
 class HttpDsl(
     private val baseURL: URL,
     private val scenarioRunner: ScenarioRunner,
 ) {
-    private val headers = mutableMapOf<String, String>()
+    private val headers = mutableMapOf<String, List<String>>()
 
     fun headers(vararg headers: HttpHeader) {
-        this.headers.putAll(headers)
+        headers.forEach {
+            this.headers.merge(it.first, listOf(it.second)) { l1, l2 -> l1 + l2 }
+        }
     }
 
     private suspend fun request(
@@ -124,7 +133,7 @@ class Scenario(
     private val builder: suspend HttpDsl.() -> Unit,
 ) {
 
-    private var runner: ScenarioRunner = CoroutinesScenarioRunner(KtorHttpClient())
+    private var runner: ScenarioRunner = CoroutinesScenarioRunner { KtorHttpClient() }
 
     fun runner(runner: ScenarioRunner): Scenario {
         this.runner = runner
