@@ -19,8 +19,8 @@ class ListDataSource<T>(private val list: List<T>) : DataSource<T> {
 }
 
 class CsvDataSource<T : Any>(
-    private val clazz: KClass<T>,
     csvFilePath: String,
+    private val clazz: KClass<T>,
     private val hasHeader: Boolean = false,
     private val delimiter: Char = ',',
 ) : DataSource<T> {

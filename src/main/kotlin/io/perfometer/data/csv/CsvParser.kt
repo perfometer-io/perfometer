@@ -7,7 +7,7 @@ internal class CsvParser(private val csvText: String, private val delimiter: Cha
     fun parse(): List<List<String>> {
         position = 0
         val result = mutableListOf<List<String>>()
-        while (notFinished()) {
+        while (isNotFinished()) {
             result.add(parseRecord())
         }
         return result
@@ -15,10 +15,10 @@ internal class CsvParser(private val csvText: String, private val delimiter: Cha
 
     private fun parseRecord(): List<String> {
         val result = mutableListOf<String>()
-        while (checkCurrentCharIsNot('\n')) {
+        while (isNotCurrentChar('\n')) {
             result.add(parseField())
         }
-        while (checkCurrentCharIs('\n', '\r')) position++
+        while (isCurrentChar('\n', '\r')) position++
         return result
     }
 
@@ -29,33 +29,33 @@ internal class CsvParser(private val csvText: String, private val delimiter: Cha
     private fun parseQuotedField(): String {
         position++
         val start = position
-        while (checkCurrentCharIsNot('"') || checkNextCharIs('"')) {
-            if (checkCurrentCharIs('"') && checkNextCharIs('"')) position++
+        while (isNotCurrentChar('"') || isNextChar('"')) {
+            if (isCurrentChar('"') && isNextChar('"')) position++
             position++
         }
         val end = position
         position++
-        while (checkCurrentCharIsNot(delimiter, '\n')) position++
-        if (checkCurrentCharIs(delimiter)) position++
+        while (isNotCurrentChar(delimiter, '\n')) position++
+        if (isCurrentChar(delimiter)) position++
         return csvText.substring(start, end).replace("\"\"", "\"")
     }
 
     private fun parseUnquotedField(): String {
         val start = position
-        while (checkCurrentCharIsNot(delimiter, '\n')) position++
+        while (isNotCurrentChar(delimiter, '\n')) position++
         val end = position
-        if (checkCurrentCharIs(delimiter)) position++
+        if (isCurrentChar(delimiter)) position++
         return csvText.substring(start, end)
     }
 
-    private fun checkCurrentCharIs(vararg chars: Char): Boolean =
-        notFinished() && chars.contains(csvText[position])
+    private fun isCurrentChar(vararg chars: Char): Boolean =
+        isNotFinished() && chars.contains(csvText[position])
 
-    private fun checkCurrentCharIsNot(vararg chars: Char): Boolean =
-        notFinished() && !chars.contains(csvText[position])
+    private fun isNotCurrentChar(vararg chars: Char): Boolean =
+        isNotFinished() && !chars.contains(csvText[position])
 
-    private fun checkNextCharIs(vararg chars: Char): Boolean =
+    private fun isNextChar(vararg chars: Char): Boolean =
         position + 1 < csvText.length && chars.contains(csvText[position+1])
 
-    private fun notFinished() = position < csvText.length
+    private fun isNotFinished() = position < csvText.length
 }

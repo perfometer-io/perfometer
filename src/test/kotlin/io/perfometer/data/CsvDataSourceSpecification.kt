@@ -16,8 +16,8 @@ internal class CsvDataSourceSpecification {
     fun `should read data from CSV file to data class objects`() {
         // when
         val data = CsvDataSource(
-            Dict::class,
             this::class.java.getResource("dict.csv").path,
+            Dict::class,
             hasHeader = true,
         )
 

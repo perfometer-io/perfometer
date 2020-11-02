@@ -12,7 +12,7 @@ class DataProviderConfiguration<T : Any> {
     }
 
     fun fromCsv(clazz: KClass<T>, csvFilePath: String, hasHeader: Boolean = false, delimiter: Char = ',') {
-        from = CsvDataSource(clazz, csvFilePath, hasHeader, delimiter)
+        from = CsvDataSource(csvFilePath, clazz, hasHeader, delimiter)
     }
 
     fun circular() {
