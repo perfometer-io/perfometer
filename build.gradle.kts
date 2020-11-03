@@ -7,7 +7,6 @@ plugins {
 }
 
 object Versions {
-    const val kotlin = "1.4.10"
     const val kotlinCoroutines = "1.4.0-M1"
     const val ktor = "1.4.0"
     const val kotest = "4.3.0"
@@ -22,13 +21,14 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
+    implementation(kotlin("reflect"))
+    implementation(kotlin("scripting-common"))
+    implementation(kotlin("scripting-jvm"))
+    implementation(kotlin("scripting-jvm-host"))
+
     implementation("io.ktor:ktor-client-cio:${Versions.ktor}")
     implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:${Versions.kotlinHtml}")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.kotlinCoroutines}")
-
-    implementation("org.jetbrains.kotlin:kotlin-scripting-common:${Versions.kotlin}")
-    implementation("org.jetbrains.kotlin:kotlin-scripting-jvm:${Versions.kotlin}")
-    implementation("org.jetbrains.kotlin:kotlin-scripting-jvm-host:${Versions.kotlin}")
 
     testImplementation(kotlin("test-junit"))
     testImplementation("io.kotest:kotest-runner-junit5:${Versions.kotest}")

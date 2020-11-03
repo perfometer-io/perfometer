@@ -7,12 +7,17 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import kotlinx.coroutines.delay
 import java.net.ServerSocket
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 
 abstract class BaseIntegrationSpecification {
+
+    private lateinit var server: ApplicationEngine
+
+    protected val port get() = server.environment.connectors.first().port
 
     private fun findFreePort(): Int {
         ServerSocket(0).use {
@@ -20,12 +25,13 @@ abstract class BaseIntegrationSpecification {
         }
     }
 
-    protected fun startRestServer(): Int {
+    @BeforeTest
+    fun startServer() {
         val store = ConcurrentHashMap<Int, String>()
         val id = AtomicInteger(0)
         val port = findFreePort()
 
-        val server = embeddedServer(Netty, port) {
+        server = embeddedServer(Netty, port) {
             routing {
                 post("/string") {
                     val currentId = id.incrementAndGet()
@@ -48,8 +54,10 @@ abstract class BaseIntegrationSpecification {
             }
         }
         server.start()
-
-        return port
     }
 
+    @AfterTest
+    fun stopServer() {
+        server.stop(0, 0)
+    }
 }
