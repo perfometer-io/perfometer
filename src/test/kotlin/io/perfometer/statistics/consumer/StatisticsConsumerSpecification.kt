@@ -3,8 +3,7 @@ package io.perfometer.statistics.consumer
 import io.perfometer.fixture.ScenarioStatisticsFixture
 import io.perfometer.internal.helper.toZonedDateTimeUTC
 import io.perfometer.statistics.ScenarioSummary
-import io.perfometer.statistics.consumer.Output.HTML
-import io.perfometer.statistics.consumer.Output.TEXT_FILE
+import io.perfometer.statistics.consumer.Output.*
 import io.perfometer.statistics.consumer.StatisticsFileWriter.Companion.dateTimeFormatter
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -58,6 +57,21 @@ internal class StatisticsConsumerSpecification {
         val reportPath = reportDirectoryPath.resolve("report-${timestamp}${HTML.fileExtension}")
         assertTrue { Files.exists(reportPath) }
         assertTrue { Files.lines(reportPath).count() >= 3 }
+    }
+
+    @Test
+    fun `should create PDF report file`() {
+        // given
+        val scenarioStatistics = ScenarioStatisticsFixture.singleGetRequestStatistics()
+
+        // when
+        val scenarioSummary: ScenarioSummary = scenarioStatistics.finish()
+        consumeStatistics(scenarioSummary, PDF)
+
+        // then
+        val timestamp = dateTimeFormatter.format(scenarioSummary.startTime.toZonedDateTimeUTC())
+        val reportPath = reportDirectoryPath.resolve("report-${timestamp}${PDF.fileExtension}")
+        assertTrue { Files.exists(reportPath) }
     }
 
     private fun removeReportFiles() {
