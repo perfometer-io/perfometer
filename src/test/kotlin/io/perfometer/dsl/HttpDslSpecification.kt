@@ -21,14 +21,24 @@ internal class HttpDslSpecification {
         val statistics = ConcurrentQueueScenarioStatistics(Instant.now())
 
         val steps = mutableListOf<HttpStep>()
+        val asyncSteps = mutableListOf<HttpStep>()
 
-        override fun runUsers(userCount: Int, duration: Duration, action: suspend () -> Unit): ScenarioSummary {
+        override fun runUsers(
+            userCount: Int,
+            duration: Duration,
+            action: suspend () -> Unit
+        ): ScenarioSummary {
             runBlocking { action() }
             return statistics.finish()
         }
 
         override suspend fun runStep(step: HttpStep) {
             steps.add(step)
+            if (step is ParallelStep) step.action()
+        }
+
+        override suspend fun runStepAsync(step: HttpStep) {
+            asyncSteps.add(step)
         }
     }
 
@@ -283,5 +293,33 @@ internal class HttpDslSpecification {
         headers.size shouldBe 1
         headers[0].key shouldBe "Accept"
         headers[0].value shouldBe listOf("application/json", "application/xml")
+    }
+
+    @Test
+    fun `should be able to run create parallel requests`() {
+        // given
+        val scenario = scenario("http://perfometer.io") {
+            get {
+                path("/")
+                name("not parallel")
+            }
+            parallel {
+                get {
+                    path("/foo")
+                    name("parallel indeed")
+                }
+            }
+            get {
+                path("/bar")
+                name("not parallel")
+            }
+        }
+
+        // when
+        scenario.runner(runner).run(userCount = 1, duration = Duration.ZERO)
+
+        // then should count parallel as single step
+        runner.steps.size shouldBe 3
+        runner.asyncSteps.size shouldBe 1
     }
 }

@@ -1,17 +1,18 @@
 package io.perfometer.runner
 
 import io.perfometer.dsl.HttpStep
+import io.perfometer.dsl.ParallelStep
 import io.perfometer.dsl.PauseStep
 import io.perfometer.dsl.RequestStep
 import io.perfometer.http.client.HttpClient
 import io.perfometer.http.client.HttpClientFactory
+import io.perfometer.internal.helper.decorateInterruptable
+import io.perfometer.internal.helper.decorateSuspendingInterruptable
 import io.perfometer.statistics.PauseStatistics
 import io.perfometer.statistics.ScenarioSummary
 import kotlinx.coroutines.runBlocking
 import java.time.Duration
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
 
 internal class ThreadPoolScenarioRunner(
     httpClientFactory: HttpClientFactory,
@@ -19,35 +20,20 @@ internal class ThreadPoolScenarioRunner(
 
     private val httpClient = ThreadLocal<HttpClient>()
 
+    // todo @ttarczynski - consider moving this to a separate class
+    private val parallelJobs = ConcurrentLinkedDeque<CompletableFuture<Void>>()
+    private val parallelJobsExecutor: ExecutorService = Executors.newCachedThreadPool()
+
     override fun runUsers(
         userCount: Int,
         duration: Duration,
         action: suspend () -> Unit,
     ): ScenarioSummary {
-        val scenarioExecutor = Executors.newFixedThreadPool(userCount)
-
-        val future = CompletableFuture.allOf(
-            *(0 until userCount)
-                .map { CompletableFuture.runAsync({ runAction(action) }, scenarioExecutor) }
-                .toTypedArray())
-
-        Executors.newSingleThreadScheduledExecutor().schedule({
-            scenarioExecutor.shutdownNow()
-        }, duration.toNanos(), TimeUnit.NANOSECONDS)
-
-        future.join()
-        return statistics.finish()
-    }
-
-    private fun runAction(action: suspend () -> Unit) {
-        httpClient.set(httpClientFactory())
-        runBlocking {
-            while (!Thread.currentThread().isInterrupted) {
-                try {
-                    action()
-                } catch (e: InterruptedException) {
-                    Thread.currentThread().interrupt()
-                }
+        return Executors.newFixedThreadPool(userCount).let { executor ->
+            runUsersInternal(userCount, executor, action).let { usersFeature ->
+                timeoutExecutors(duration, executor)
+                usersFeature.join()
+                statistics.finish()
             }
         }
     }
@@ -56,11 +42,58 @@ internal class ThreadPoolScenarioRunner(
         when (step) {
             is RequestStep -> executeHttp(httpClient.get(), step)
             is PauseStep -> pauseFor(step.duration)
+            is ParallelStep -> runParallel(step)
         }
     }
 
-    private fun pauseFor(duration: Duration) {
+    override suspend fun runStepAsync(step: HttpStep) {
+        parallelJobs.add(
+            CompletableFuture.runAsync(
+                { runBlocking { runStep(step) } }, parallelJobsExecutor
+            )
+        )
+    }
+
+    private fun runUsersInternal(
+        userCount: Int,
+        scenarioExecutor: ExecutorService,
+        action: suspend () -> Unit,
+    ): CompletableFuture<Void> {
+        return CompletableFuture.allOf(
+            *(0 until userCount)
+                .map { CompletableFuture.runAsync({ runAction(action) }, scenarioExecutor) }
+                .toTypedArray())
+    }
+
+    private fun timeoutExecutors(
+        duration: Duration,
+        scenarioExecutor: ExecutorService,
+    ) {
+        Executors.newSingleThreadScheduledExecutor().schedule({
+            scenarioExecutor.shutdownNow()
+            parallelJobsExecutor.shutdownNow()
+        }, duration.toNanos(), TimeUnit.NANOSECONDS)
+    }
+
+    private fun runParallel(step: ParallelStep) {
+        runBlocking {
+            step.action()
+        }
+        CompletableFuture.allOf(*parallelJobs.toTypedArray()).join()
+    }
+
+    private fun runAction(action: suspend () -> Unit) = decorateInterruptable {
+        httpClient.set(httpClientFactory())
+        runBlocking {
+            while (!Thread.currentThread().isInterrupted) {
+                decorateSuspendingInterruptable(action)
+            }
+        }
+    }
+
+    private fun pauseFor(duration: Duration) = decorateInterruptable {
         Thread.sleep(duration.toMillis())
         statistics.gather(PauseStatistics(duration))
     }
+
 }

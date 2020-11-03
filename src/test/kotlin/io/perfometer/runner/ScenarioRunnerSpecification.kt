@@ -9,6 +9,7 @@ import io.perfometer.dsl.scenario
 import io.perfometer.http.*
 import io.perfometer.http.client.HttpClient
 import org.junit.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import java.time.Duration
 
 @Suppress("FunctionName")
@@ -77,5 +78,17 @@ abstract class ScenarioRunnerSpecification {
         val diff = System.currentTimeMillis() - startTime
         diff shouldBeGreaterThanOrEqualTo 2000L
         summary.totalSummary.shouldBeNull()
+    }
+
+    @Test
+    fun `should timeout scenario event if there are parallel tasks still running`() {
+        assertDoesNotThrow {
+            scenario("https://perfometer.io") {
+                get { path("/") }
+                parallel {
+                    pause(Duration.ofSeconds(1500))
+                }
+            }.runner(runner).run(1, Duration.ofMillis(100))
+        }
     }
 }

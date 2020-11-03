@@ -1,12 +1,18 @@
 package io.perfometer.integration
 
 import io.ktor.application.*
-import io.ktor.http.*
+import io.ktor.http.ContentType.*
+import io.ktor.http.HttpStatusCode.Companion.NotFound
+import io.ktor.http.HttpStatusCode.Companion.OK
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import io.ktor.util.pipeline.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import io.ktor.sessions.*
 import java.net.ServerSocket
 import java.util.*
@@ -42,23 +48,26 @@ abstract class BaseIntegrationSpecification {
                 cookie<User>("SESSION", SessionStorageMemory())
             }
             routing {
-                post("/string") {
+                get("/strings") {
+                    call.respondText("string resource", Text.Plain, OK)
+                }
+                post("/strings") {
                     val currentId = id.incrementAndGet()
                     stringStore[currentId] = call.receiveText()
-                    call.respondText(currentId.toString(), ContentType.Text.Plain)
+                    call.respondText(currentId.toString(), Text.Plain)
                 }
-                get("/string/{id}") {
+                get("/strings/{id}") {
                     val string = stringStore[call.parameters["id"]?.toInt()]
                     if (string != null) {
-                        call.respondText(string, ContentType.Text.Plain)
+                        call.respondText(string, Text.Plain)
                     } else {
-                        call.respondText("not found", ContentType.Text.Plain, HttpStatusCode.NotFound)
+                        call.respondText("not found", Text.Plain, NotFound)
                     }
                 }
-                put("/string/{id}") {
+                put("/strings/{id}") {
                     val currentId = call.parameters["id"]?.toInt()!!
                     stringStore[currentId] = call.receiveText()
-                    call.respond(HttpStatusCode.OK)
+                    call.respond(OK)
                 }
 
                 post("/login") {
