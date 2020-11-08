@@ -25,7 +25,7 @@ class KtorHttpClient : HttpClient {
         ) {
             method = HttpMethod.parse(request.method.toString())
             headers {
-                request.headers.forEach { (name, value) -> appendAll(name, value) }
+                request.headers.forEach { (name, values) -> appendAll(name, values) }
             }
             body = request.body
         }

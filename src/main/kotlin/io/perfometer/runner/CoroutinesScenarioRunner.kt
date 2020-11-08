@@ -19,7 +19,7 @@ internal class CoroutinesScenarioRunner(
     httpClientFactory: HttpClientFactory,
 ) : BaseScenarioRunner(httpClientFactory) {
 
-    data class CoroutineHttpClient(
+    private data class CoroutineHttpClient(
         val httpClient: HttpClient
     ) : AbstractCoroutineContextElement(CoroutineHttpClient) {
 
@@ -47,12 +47,15 @@ internal class CoroutinesScenarioRunner(
     override suspend fun runStep(step: HttpStep) {
         when (step) {
             is RequestStep -> executeHttp(
-                coroutineContext[CoroutineHttpClient.Key]?.httpClient ?: throw IllegalStateException(),
+                httpClient(),
                 step,
             )
             is PauseStep -> pauseFor(step.duration)
         }
     }
+
+    private suspend fun httpClient() =
+        coroutineContext[CoroutineHttpClient]?.httpClient ?: throw IllegalStateException()
 
     private suspend fun pauseFor(duration: Duration) {
         delay(duration.toMillis())

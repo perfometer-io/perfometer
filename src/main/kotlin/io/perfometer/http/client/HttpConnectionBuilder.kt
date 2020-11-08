@@ -45,7 +45,7 @@ internal class HttpConnectionBuilder(
     fun headers(headers: Map<String, List<String>>) {
         headers
             .flatMap { entry -> entry.value.map { Pair(entry.key, it) } }
-            .forEach { this.connection.addRequestProperty(it.first, it.second) }
+            .forEach { (name, value) -> this.connection.addRequestProperty(name, value) }
     }
 
     fun body(body: ByteArray) {
