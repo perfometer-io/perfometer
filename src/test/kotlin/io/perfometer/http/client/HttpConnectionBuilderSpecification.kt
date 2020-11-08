@@ -12,8 +12,8 @@ class HttpConnectionBuilderSpecification {
         val connection = httpConnection(URL("https://perfometer.io"), "/") {
             method("GET")
             headers(mapOf(
-                    "Content-type" to "application/json",
-                    "Accept" to "text/html"
+                    "Content-type" to listOf("application/json"),
+                    "Accept" to listOf("text/html"),
             ))
         }
 

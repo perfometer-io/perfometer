@@ -6,6 +6,8 @@ import io.kotest.matchers.string.shouldStartWith
 import io.perfometer.dsl.data
 import io.perfometer.dsl.scenario
 import io.perfometer.http.HttpHeaders
+import io.perfometer.http.client.SimpleHttpClient
+import io.perfometer.runner.ThreadPoolScenarioRunner
 import java.time.Duration
 import java.util.concurrent.ThreadLocalRandom
 import kotlin.properties.Delegates
@@ -23,7 +25,7 @@ class IntegrationSpecification : BaseIntegrationSpecification() {
                 path("/string")
                 body(string.toByteArray())
                 consume {
-                    it.headers shouldContain (HttpHeaders.CONTENT_TYPE to "text/plain; charset=UTF-8")
+                    it.headers shouldContain (HttpHeaders.CONTENT_TYPE to listOf("text/plain; charset=UTF-8"))
                     id = it.asString().toInt()
                 }
             }
@@ -31,7 +33,7 @@ class IntegrationSpecification : BaseIntegrationSpecification() {
                 name("GET /string/:id")
                 path("/string/${id}")
                 consume {
-                    it.headers shouldContain (HttpHeaders.CONTENT_TYPE to "text/plain; charset=UTF-8")
+                    it.headers shouldContain (HttpHeaders.CONTENT_TYPE to listOf("text/plain; charset=UTF-8"))
                     it.asString() shouldBe string
                 }
             }
@@ -44,7 +46,7 @@ class IntegrationSpecification : BaseIntegrationSpecification() {
                 name("GET /string/:id")
                 path("/string/${id}")
                 consume {
-                    it.headers shouldContain (HttpHeaders.CONTENT_TYPE to "text/plain; charset=UTF-8")
+                    it.headers shouldContain (HttpHeaders.CONTENT_TYPE to listOf("text/plain; charset=UTF-8"))
                     it.asString() shouldBe "just a string"
                 }
             }
@@ -67,7 +69,7 @@ class IntegrationSpecification : BaseIntegrationSpecification() {
                 path("/string")
                 body(strings.next().text.toByteArray())
                 consume {
-                    it.headers shouldContain (HttpHeaders.CONTENT_TYPE to "text/plain; charset=UTF-8")
+                    it.headers shouldContain (HttpHeaders.CONTENT_TYPE to listOf("text/plain; charset=UTF-8"))
                     id = it.asString().toInt()
                 }
             }
@@ -75,8 +77,26 @@ class IntegrationSpecification : BaseIntegrationSpecification() {
                 name("GET /string/:id")
                 path("/string/${id}")
                 consume {
-                    it.headers shouldContain (HttpHeaders.CONTENT_TYPE to "text/plain; charset=UTF-8")
+                    it.headers shouldContain (HttpHeaders.CONTENT_TYPE to listOf("text/plain; charset=UTF-8"))
                     it.asString() shouldStartWith "text "
+                }
+            }
+        }.run(100, Duration.ofSeconds(1))
+    }
+
+    @Test
+    fun `should keep session information using cookies`() {
+        scenario("http://localhost:${port}") {
+            val username = "user ${ThreadLocalRandom.current().nextInt() % 100}"
+
+            post {
+                path("/login")
+                params("username" to username)
+            }
+            get {
+                path("/current-user")
+                consume {
+                    it.asString() shouldBe username
                 }
             }
         }.run(100, Duration.ofSeconds(1))

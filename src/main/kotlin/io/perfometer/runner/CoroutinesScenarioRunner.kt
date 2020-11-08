@@ -4,16 +4,27 @@ import io.perfometer.dsl.HttpStep
 import io.perfometer.dsl.PauseStep
 import io.perfometer.dsl.RequestStep
 import io.perfometer.http.client.HttpClient
+import io.perfometer.http.client.HttpClientFactory
 import io.perfometer.statistics.PauseStatistics
 import io.perfometer.statistics.ScenarioSummary
 import kotlinx.coroutines.*
 import java.time.Duration
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 import kotlin.time.ExperimentalTime
 import kotlin.time.toKotlinDuration
 
 internal class CoroutinesScenarioRunner(
-    httpClient: HttpClient,
-) : BaseScenarioRunner(httpClient) {
+    httpClientFactory: HttpClientFactory,
+) : BaseScenarioRunner(httpClientFactory) {
+
+    private data class CoroutineHttpClient(
+        val httpClient: HttpClient
+    ) : AbstractCoroutineContextElement(CoroutineHttpClient) {
+
+        companion object Key : CoroutineContext.Key<CoroutineHttpClient>
+    }
 
     @ExperimentalTime
     override fun runUsers(
@@ -23,7 +34,7 @@ internal class CoroutinesScenarioRunner(
     ): ScenarioSummary {
         runBlocking(Dispatchers.Default) {
             (1..userCount).map {
-                launch {
+                launch(CoroutineHttpClient(httpClientFactory())) {
                     withTimeout(duration.toKotlinDuration()) {
                         while (isActive) action()
                     }
@@ -35,10 +46,16 @@ internal class CoroutinesScenarioRunner(
 
     override suspend fun runStep(step: HttpStep) {
         when (step) {
-            is RequestStep -> executeHttp(step)
+            is RequestStep -> executeHttp(
+                httpClient(),
+                step,
+            )
             is PauseStep -> pauseFor(step.duration)
         }
     }
+
+    private suspend fun httpClient() =
+        coroutineContext[CoroutineHttpClient]?.httpClient ?: throw IllegalStateException()
 
     private suspend fun pauseFor(duration: Duration) {
         delay(duration.toMillis())
