@@ -1,4 +1,4 @@
-package io.perfometer.runner;
+package io.perfometer.runner
 
 class CoroutinesScenarioRunnerSpecification : ScenarioRunnerSpecification() {
 

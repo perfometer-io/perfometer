@@ -9,15 +9,10 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import io.ktor.util.pipeline.*
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import io.ktor.sessions.*
+import kotlinx.coroutines.delay
 import java.net.ServerSocket
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -39,7 +34,6 @@ abstract class BaseIntegrationSpecification {
     @BeforeTest
     fun startServer() {
         val stringStore = ConcurrentHashMap<Int, String>()
-        val userStore = ConcurrentHashMap<String, String>()
         val id = AtomicInteger(0)
         val port = findFreePort()
 
@@ -73,10 +67,15 @@ abstract class BaseIntegrationSpecification {
                 post("/login") {
                     val username = call.parameters["username"]!!
                     call.sessions.set(User(username))
-                    call.respond(HttpStatusCode.OK)
+                    call.respond(OK)
                 }
                 get("/current-user") {
-                    call.respondText(call.sessions.get<User>()?.username ?: "", ContentType.Text.Plain)
+                    call.respondText(call.sessions.get<User>()?.username ?: "", Text.Plain)
+                }
+                get("delay") {
+                    val delayTime = call.parameters["time"]!!.toLong()
+                    delay(delayTime)
+                    call.respondText("OK", Text.Plain)
                 }
             }
         }

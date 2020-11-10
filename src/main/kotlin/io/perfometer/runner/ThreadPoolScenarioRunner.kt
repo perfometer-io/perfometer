@@ -4,7 +4,6 @@ import io.perfometer.dsl.HttpStep
 import io.perfometer.dsl.ParallelStep
 import io.perfometer.dsl.PauseStep
 import io.perfometer.dsl.RequestStep
-import io.perfometer.http.client.HttpClient
 import io.perfometer.http.client.HttpClientFactory
 import io.perfometer.internal.helper.decorateInterruptable
 import io.perfometer.internal.helper.decorateSuspendingInterruptable
@@ -18,9 +17,8 @@ internal class ThreadPoolScenarioRunner(
     httpClientFactory: HttpClientFactory,
 ) : BaseScenarioRunner(httpClientFactory) {
 
-    private val httpClient = ThreadLocal<HttpClient>()
+    private val httpClient = ThreadLocal.withInitial { httpClientFactory() }
 
-    // todo @ttarczynski - consider moving this to a separate class
     private val parallelJobs = ConcurrentLinkedDeque<CompletableFuture<Void>>()
     private val parallelJobsExecutor: ExecutorService = Executors.newCachedThreadPool()
 
@@ -46,10 +44,10 @@ internal class ThreadPoolScenarioRunner(
         }
     }
 
-    override suspend fun runStepAsync(step: HttpStep) {
+    override suspend fun registerAsync(step: HttpStep) {
         parallelJobs.add(
             CompletableFuture.runAsync(
-                { runBlocking { runStep(step) } }, parallelJobsExecutor
+                { decorateInterruptable { runBlocking { runStep(step) } } }, parallelJobsExecutor
             )
         )
     }
@@ -77,7 +75,7 @@ internal class ThreadPoolScenarioRunner(
 
     private fun runParallel(step: ParallelStep) {
         runBlocking {
-            step.action()
+            step.asyncRegistrator()
         }
         CompletableFuture.allOf(*parallelJobs.toTypedArray()).join()
     }

@@ -34,10 +34,10 @@ internal class HttpDslSpecification {
 
         override suspend fun runStep(step: HttpStep) {
             steps.add(step)
-            if (step is ParallelStep) step.action()
+            if (step is ParallelStep) step.asyncRegistrator()
         }
 
-        override suspend fun runStepAsync(step: HttpStep) {
+        override suspend fun registerAsync(step: HttpStep) {
             asyncSteps.add(step)
         }
     }
@@ -256,70 +256,5 @@ internal class HttpDslSpecification {
             }
             else -> fail("Expected RequestStep")
         }
-    }
-
-    @Test
-    fun `should encode params`() {
-        scenario("https://perfometer.io") {
-            get {
-                path("/path")
-                params(
-                    "foo" to "bar baz",
-                    "bar" to "foo=for",
-                )
-            }
-        }.runner(runner).run(1, Duration.ZERO)
-
-        runner.steps.size shouldBe 1
-        when (val step1 = runner.steps[0]) {
-            is RequestStep -> {
-                step1.request.pathWithParams shouldBe "/path?foo=bar+baz&bar=foo%3Dfor"
-            }
-            else -> fail("Expected RequestStep")
-        }
-    }
-
-    @Test
-    fun `should allow multiple headers with the same name in request`() {
-        scenario("https://perfometer.io") {
-            get {
-                headers("Accept" to "application/json")
-                headers("Accept" to "application/xml")
-            }
-        }.runner(runner).run(1, Duration.ZERO);
-
-        val headers = runner.steps.filterIsInstance<RequestStep>()
-            .flatMap { it.request.headers.entries }
-        headers.size shouldBe 1
-        headers[0].key shouldBe "Accept"
-        headers[0].value shouldBe listOf("application/json", "application/xml")
-    }
-
-    @Test
-    fun `should be able to run create parallel requests`() {
-        // given
-        val scenario = scenario("http://perfometer.io") {
-            get {
-                path("/")
-                name("not parallel")
-            }
-            parallel {
-                get {
-                    path("/foo")
-                    name("parallel indeed")
-                }
-            }
-            get {
-                path("/bar")
-                name("not parallel")
-            }
-        }
-
-        // when
-        scenario.runner(runner).run(userCount = 1, duration = Duration.ZERO)
-
-        // then should count parallel as single step
-        runner.steps.size shouldBe 3
-        runner.asyncSteps.size shouldBe 1
     }
 }
