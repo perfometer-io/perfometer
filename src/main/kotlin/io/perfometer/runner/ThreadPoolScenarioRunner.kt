@@ -8,6 +8,7 @@ import io.perfometer.statistics.PauseStatistics
 import io.perfometer.statistics.ScenarioSummary
 import kotlinx.coroutines.runBlocking
 import java.time.Duration
+import java.time.Instant
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
@@ -28,11 +29,12 @@ internal class ThreadPoolScenarioRunner(
         duration: Duration,
         action: suspend () -> Unit,
     ): ScenarioSummary {
+        statisticsCollector.start(Instant.now())
         return Executors.newFixedThreadPool(userCount).let { executor ->
-            runUsersInternal(userCount, executor, action).let { usersFeature ->
+            runUsersInternal(userCount, executor, action).let { usersFuture ->
                 timeoutExecutors(duration, executor)
-                usersFeature.join()
-                statistics.finish()
+                usersFuture.join()
+                statisticsCollector.finish(Instant.now())
             }
         }
     }
@@ -92,7 +94,7 @@ internal class ThreadPoolScenarioRunner(
 
     private fun pauseFor(duration: Duration) = decorateInterruptable {
         Thread.sleep(duration.toMillis())
-        statistics.gather(PauseStatistics(duration))
+        statisticsCollector.gather(PauseStatistics(duration))
     }
 
 }

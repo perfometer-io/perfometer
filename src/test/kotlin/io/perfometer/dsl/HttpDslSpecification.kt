@@ -5,7 +5,7 @@ import io.kotest.matchers.shouldBe
 import io.perfometer.http.HttpHeaders
 import io.perfometer.http.HttpMethod
 import io.perfometer.runner.ScenarioRunner
-import io.perfometer.statistics.ConcurrentQueueScenarioStatistics
+import io.perfometer.statistics.ConcurrentQueueStatisticsCollector
 import io.perfometer.statistics.ScenarioSummary
 import kotlinx.coroutines.runBlocking
 import java.net.URL
@@ -18,7 +18,7 @@ import kotlin.test.Test
 internal class HttpDslSpecification {
 
     private val runner = object : ScenarioRunner {
-        val statistics = ConcurrentQueueScenarioStatistics(Instant.now())
+        val statisticsCollector = ConcurrentQueueStatisticsCollector()
 
         val steps = mutableListOf<HttpStep>()
         val asyncSteps = mutableListOf<HttpStep>()
@@ -28,8 +28,9 @@ internal class HttpDslSpecification {
             duration: Duration,
             action: suspend () -> Unit
         ): ScenarioSummary {
+            statisticsCollector.start(Instant.ofEpochMilli(1))
             runBlocking { action() }
-            return statistics.finish()
+            return statisticsCollector.finish(Instant.ofEpochMilli(2))
         }
 
         override suspend fun runStep(step: HttpStep) {

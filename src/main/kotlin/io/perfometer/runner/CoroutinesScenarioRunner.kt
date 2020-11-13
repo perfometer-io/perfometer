@@ -7,6 +7,7 @@ import io.perfometer.statistics.PauseStatistics
 import io.perfometer.statistics.ScenarioSummary
 import kotlinx.coroutines.*
 import java.time.Duration
+import java.time.Instant
 import java.util.*
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
@@ -21,6 +22,7 @@ internal class CoroutinesScenarioRunner(
         duration: Duration,
         action: suspend () -> Unit,
     ): ScenarioSummary {
+        statisticsCollector.start(Instant.now())
         runBlocking(Dispatchers.Default) {
             withTimeoutOrNull(duration.toMillis()) {
                 (1..userCount).map {
@@ -30,7 +32,7 @@ internal class CoroutinesScenarioRunner(
                 }
             }
         }
-        return statistics.finish()
+        return statisticsCollector.finish(Instant.now())
     }
 
     override suspend fun runStep(step: HttpStep) {
@@ -81,7 +83,7 @@ internal class CoroutinesScenarioRunner(
 
     private suspend fun pauseFor(duration: Duration) {
         delay(duration.toMillis())
-        statistics.gather(PauseStatistics(duration))
+        statisticsCollector.gather(PauseStatistics(duration))
     }
 
     private suspend fun context(): CoroutineJobContext {
