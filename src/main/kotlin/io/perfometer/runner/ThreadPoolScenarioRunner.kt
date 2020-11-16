@@ -19,7 +19,7 @@ internal class ThreadPoolScenarioRunner(
 
     private val httpClient = ThreadLocal.withInitial { httpClientFactory() }
 
-    private val parallelJobs = ConcurrentLinkedDeque<CompletableFuture<Void>>()
+    private val parallelJobs = ThreadLocal.withInitial { ConcurrentLinkedDeque<CompletableFuture<Void>>() }
     private val parallelJobsExecutor: ExecutorService = Executors.newCachedThreadPool()
 
     override fun runUsers(
@@ -45,7 +45,7 @@ internal class ThreadPoolScenarioRunner(
     }
 
     override suspend fun registerAsync(step: HttpStep) {
-        parallelJobs.add(
+        parallelJobs.get().add(
             CompletableFuture.runAsync(
                 { decorateInterruptable { runBlocking { runStep(step) } } }, parallelJobsExecutor
             )
@@ -77,7 +77,7 @@ internal class ThreadPoolScenarioRunner(
         runBlocking {
             step.asyncRegistrator()
         }
-        CompletableFuture.allOf(*parallelJobs.toTypedArray()).join()
+        CompletableFuture.allOf(*parallelJobs.get().toTypedArray()).join()
     }
 
     private fun runAction(action: suspend () -> Unit) = decorateInterruptable {
