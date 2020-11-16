@@ -133,7 +133,7 @@ class IntegrationSpecification : BaseIntegrationSpecification() {
                         }
                     }
                 }
-            }.runner(runner).run(50, Duration.ofMillis(1000))
+            }.runner(runner).run(10, Duration.ofMillis(1000))
 
             assertNotNull(body)
             assertTrue { summary.summaries.any { s -> s.name == "async-post" } }
