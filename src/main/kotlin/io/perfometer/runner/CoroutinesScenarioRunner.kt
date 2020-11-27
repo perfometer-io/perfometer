@@ -53,7 +53,7 @@ internal class CoroutinesScenarioRunner(
     }
 
     /**
-     * Registers steps for async execution, calling step's asyncRegistrator function,
+     * Registers steps for async execution, building the DSL and using a visitor to register async tasks,
      * and then iterates over registered tasks creating a separate coroutine for each.
      *
      * This method will not return until either all child coroutines are Completed, or terminate with an exception,
