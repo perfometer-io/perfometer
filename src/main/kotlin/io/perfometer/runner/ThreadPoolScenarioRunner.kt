@@ -1,9 +1,6 @@
 package io.perfometer.runner
 
-import io.perfometer.dsl.HttpStep
-import io.perfometer.dsl.ParallelStep
-import io.perfometer.dsl.PauseStep
-import io.perfometer.dsl.RequestStep
+import io.perfometer.dsl.*
 import io.perfometer.http.client.HttpClientFactory
 import io.perfometer.internal.helper.decorateInterruptable
 import io.perfometer.internal.helper.decorateSuspendingInterruptable
@@ -11,7 +8,11 @@ import io.perfometer.statistics.PauseStatistics
 import io.perfometer.statistics.ScenarioSummary
 import kotlinx.coroutines.runBlocking
 import java.time.Duration
-import java.util.concurrent.*
+import java.util.*
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 internal class ThreadPoolScenarioRunner(
     httpClientFactory: HttpClientFactory,
@@ -19,7 +20,7 @@ internal class ThreadPoolScenarioRunner(
 
     private val httpClient = ThreadLocal.withInitial { httpClientFactory() }
 
-    private val parallelJobs = ThreadLocal.withInitial { ConcurrentLinkedDeque<CompletableFuture<Void>>() }
+    private val parallelJobs = ThreadLocal.withInitial { LinkedList<CompletableFuture<Void>>() }
     private val parallelJobsExecutor: ExecutorService = Executors.newCachedThreadPool()
 
     override fun runUsers(
@@ -75,7 +76,7 @@ internal class ThreadPoolScenarioRunner(
 
     private fun runParallel(step: ParallelStep) {
         runBlocking {
-            step.asyncRegistrator()
+            step.builder(HttpDsl(step.baseURL) { registerAsync(it) })
         }
         CompletableFuture.allOf(*parallelJobs.get().toTypedArray()).join()
     }

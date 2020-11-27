@@ -1,9 +1,6 @@
 package io.perfometer.runner
 
-import io.perfometer.dsl.HttpStep
-import io.perfometer.dsl.ParallelStep
-import io.perfometer.dsl.PauseStep
-import io.perfometer.dsl.RequestStep
+import io.perfometer.dsl.*
 import io.perfometer.http.client.HttpClient
 import io.perfometer.http.client.HttpClientFactory
 import io.perfometer.statistics.PauseStatistics
@@ -11,7 +8,6 @@ import io.perfometer.statistics.ScenarioSummary
 import kotlinx.coroutines.*
 import java.time.Duration
 import java.util.*
-import java.util.concurrent.ConcurrentLinkedDeque
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
@@ -65,7 +61,7 @@ internal class CoroutinesScenarioRunner(
      */
     private suspend fun runParallel(step: ParallelStep) =
         coroutineScope {
-            step.asyncRegistrator()
+            step.builder(HttpDsl(step.baseURL) { registerAsync(it) })
             while (hasNextJob()) {
                 runJob(this@CoroutinesScenarioRunner, this)
             }
@@ -95,7 +91,7 @@ internal class CoroutinesScenarioRunner(
 
     private data class CoroutineJobContext(
         val httpClient: HttpClient,
-        val asyncSteps: Deque<HttpStep> = ConcurrentLinkedDeque(),
+        val asyncSteps: Deque<HttpStep> = LinkedList(),
     ) : AbstractCoroutineContextElement(CoroutineJobContext) {
         companion object Key : CoroutineContext.Key<CoroutineJobContext>
     }

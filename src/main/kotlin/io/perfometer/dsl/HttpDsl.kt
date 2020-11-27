@@ -19,7 +19,10 @@ import java.util.*
 sealed class HttpStep
 data class RequestStep(val request: HttpRequest) : HttpStep()
 data class PauseStep(val duration: Duration) : HttpStep()
-data class ParallelStep(val asyncRegistrator: suspend () -> Unit) : HttpStep()
+data class ParallelStep(
+    val baseURL: URL,
+    val builder: suspend HttpDsl.() -> Unit,
+) : HttpStep()
 
 typealias HttpHeader = Pair<String, String>
 typealias HttpParam = Pair<String, String>
@@ -27,7 +30,6 @@ typealias HttpStepVisitor = suspend (HttpStep) -> Unit
 
 class HttpDsl(
     private val baseURL: URL,
-    private val runner: ScenarioRunner,
     private val stepVisitor: HttpStepVisitor,
 ) {
     private val headers = mutableMapOf<String, List<String>>()
@@ -46,13 +48,7 @@ class HttpDsl(
     suspend fun parallel(
         builder: suspend HttpDsl.() -> Unit,
     ) {
-        runner.runStep(ParallelStep {
-            builder(
-                HttpDsl(
-                    baseURL,
-                    runner
-                ) { runner.registerAsync(it) })
-        })
+        stepVisitor(ParallelStep(baseURL, builder))
     }
 
     suspend fun get(urlString: String? = null, builder: RequestDsl.() -> Unit) =
@@ -101,7 +97,7 @@ class Scenario(
         vararg outputTo: Output = arrayOf(STDOUT)
     ): ScenarioSummary {
         println("Running scenario for $userCount users and ${duration.toReadableString()} time")
-        val dsl = HttpDsl(baseURL, runner) { runner.runStep(it) }
+        val dsl = HttpDsl(baseURL) { runner.runStep(it) }
         return runner
             .runUsers(userCount, duration) { builder(dsl) }
             .also { consumeStatistics(it, *outputTo) }

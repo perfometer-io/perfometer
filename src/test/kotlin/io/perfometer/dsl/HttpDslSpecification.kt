@@ -34,7 +34,7 @@ internal class HttpDslSpecification {
 
         override suspend fun runStep(step: HttpStep) {
             steps.add(step)
-            if (step is ParallelStep) step.asyncRegistrator()
+            if (step is ParallelStep) step.builder(HttpDsl(step.baseURL) { registerAsync(it) })
         }
 
         override suspend fun registerAsync(step: HttpStep) {
