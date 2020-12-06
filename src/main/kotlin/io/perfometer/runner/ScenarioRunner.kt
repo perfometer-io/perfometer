@@ -8,5 +8,7 @@ interface ScenarioRunner {
 
     fun runUsers(userCount: Int, duration: Duration, action: suspend () -> Unit): ScenarioSummary
 
+    suspend fun registerAsync(step: HttpStep)
+
     suspend fun runStep(step: HttpStep)
 }

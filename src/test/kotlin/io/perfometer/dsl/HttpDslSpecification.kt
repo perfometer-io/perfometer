@@ -21,14 +21,24 @@ internal class HttpDslSpecification {
         val statistics = ConcurrentQueueScenarioStatistics(Instant.now())
 
         val steps = mutableListOf<HttpStep>()
+        val asyncSteps = mutableListOf<HttpStep>()
 
-        override fun runUsers(userCount: Int, duration: Duration, action: suspend () -> Unit): ScenarioSummary {
+        override fun runUsers(
+            userCount: Int,
+            duration: Duration,
+            action: suspend () -> Unit
+        ): ScenarioSummary {
             runBlocking { action() }
             return statistics.finish()
         }
 
         override suspend fun runStep(step: HttpStep) {
             steps.add(step)
+            if (step is ParallelStep) step.builder(HttpDsl(step.baseURL) { registerAsync(it) })
+        }
+
+        override suspend fun registerAsync(step: HttpStep) {
+            asyncSteps.add(step)
         }
     }
 
@@ -246,42 +256,5 @@ internal class HttpDslSpecification {
             }
             else -> fail("Expected RequestStep")
         }
-    }
-
-    @Test
-    fun `should encode params`() {
-        scenario("https://perfometer.io") {
-            get {
-                path("/path")
-                params(
-                    "foo" to "bar baz",
-                    "bar" to "foo=for",
-                )
-            }
-        }.runner(runner).run(1, Duration.ZERO)
-
-        runner.steps.size shouldBe 1
-        when (val step1 = runner.steps[0]) {
-            is RequestStep -> {
-                step1.request.pathWithParams shouldBe "/path?foo=bar+baz&bar=foo%3Dfor"
-            }
-            else -> fail("Expected RequestStep")
-        }
-    }
-
-    @Test
-    fun `should allow multiple headers with the same name in request`() {
-        scenario("https://perfometer.io") {
-            get {
-                headers("Accept" to "application/json")
-                headers("Accept" to "application/xml")
-            }
-        }.runner(runner).run(1, Duration.ZERO);
-
-        val headers = runner.steps.filterIsInstance<RequestStep>()
-            .flatMap { it.request.headers.entries }
-        headers.size shouldBe 1
-        headers[0].key shouldBe "Accept"
-        headers[0].value shouldBe listOf("application/json", "application/xml")
     }
 }

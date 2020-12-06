@@ -1,41 +1,30 @@
 package io.perfometer.runner
 
-import io.perfometer.dsl.HttpStep
-import io.perfometer.dsl.PauseStep
-import io.perfometer.dsl.RequestStep
+import io.perfometer.dsl.*
 import io.perfometer.http.client.HttpClient
 import io.perfometer.http.client.HttpClientFactory
 import io.perfometer.statistics.PauseStatistics
 import io.perfometer.statistics.ScenarioSummary
 import kotlinx.coroutines.*
 import java.time.Duration
+import java.util.*
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
-import kotlin.time.ExperimentalTime
-import kotlin.time.toKotlinDuration
 
 internal class CoroutinesScenarioRunner(
     httpClientFactory: HttpClientFactory,
 ) : BaseScenarioRunner(httpClientFactory) {
 
-    private data class CoroutineHttpClient(
-        val httpClient: HttpClient
-    ) : AbstractCoroutineContextElement(CoroutineHttpClient) {
-
-        companion object Key : CoroutineContext.Key<CoroutineHttpClient>
-    }
-
-    @ExperimentalTime
     override fun runUsers(
         userCount: Int,
         duration: Duration,
         action: suspend () -> Unit,
     ): ScenarioSummary {
         runBlocking(Dispatchers.Default) {
-            (1..userCount).map {
-                launch(CoroutineHttpClient(httpClientFactory())) {
-                    withTimeout(duration.toKotlinDuration()) {
+            withTimeoutOrNull(duration.toMillis()) {
+                (1..userCount).map {
+                    launch(CoroutineJobContext(httpClientFactory())) {
                         while (isActive) action()
                     }
                 }
@@ -47,18 +36,63 @@ internal class CoroutinesScenarioRunner(
     override suspend fun runStep(step: HttpStep) {
         when (step) {
             is RequestStep -> executeHttp(
-                httpClient(),
+                context().httpClient,
                 step,
             )
             is PauseStep -> pauseFor(step.duration)
+            is ParallelStep -> runParallel(step)
         }
     }
 
-    private suspend fun httpClient() =
-        coroutineContext[CoroutineHttpClient]?.httpClient ?: throw IllegalStateException()
+    /**
+     * Registers async step at the level of a 'user-coroutine'.
+     * Parallel blocks run inside one 'user-coroutine' share the same queue of async tasks.
+     */
+    override suspend fun registerAsync(step: HttpStep) = coroutineScope<Unit> {
+        context().asyncSteps.add(step)
+    }
+
+    /**
+     * Registers steps for async execution, building the DSL and using a visitor to register async tasks,
+     * and then iterates over registered tasks creating a separate coroutine for each.
+     *
+     * This method will not return until either all child coroutines are Completed, or terminate with an exception,
+     * or the parent 'user-coroutines' times out, effectively cancelling all pending jobs.
+     */
+    private suspend fun runParallel(step: ParallelStep) =
+        coroutineScope {
+            step.builder(HttpDsl(step.baseURL) { registerAsync(it) })
+            while (hasNextJob()) {
+                runJob(this@CoroutinesScenarioRunner, this)
+            }
+        }
+
+    private suspend fun runJob(
+        coroutinesScenarioRunner: CoroutinesScenarioRunner,
+        coroutineScope: CoroutineScope
+    ) {
+        val nextStep = coroutinesScenarioRunner.context().asyncSteps.poll()
+        coroutineScope.launch(CoroutineJobContext(httpClientFactory())) {
+            runStep(nextStep)
+        }
+    }
+
+    private suspend fun hasNextJob() = context().asyncSteps.size > 0
 
     private suspend fun pauseFor(duration: Duration) {
         delay(duration.toMillis())
         statistics.gather(PauseStatistics(duration))
+    }
+
+    private suspend fun context(): CoroutineJobContext {
+        return coroutineContext[CoroutineJobContext.Key]
+            ?: throw IllegalStateException("Required context not setup")
+    }
+
+    private data class CoroutineJobContext(
+        val httpClient: HttpClient,
+        val asyncSteps: Deque<HttpStep> = LinkedList(),
+    ) : AbstractCoroutineContextElement(CoroutineJobContext) {
+        companion object Key : CoroutineContext.Key<CoroutineJobContext>
     }
 }
