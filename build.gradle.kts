@@ -26,7 +26,11 @@ dependencies {
     implementation(kotlin("scripting-jvm"))
     implementation(kotlin("scripting-jvm-host"))
 
+    implementation("com.itextpdf:itextpdf:5.5.10")
+    implementation("com.itextpdf.tool:xmlworker:5.5.10")
+
     implementation("io.ktor:ktor-client-cio:${Versions.ktor}")
+
     implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:${Versions.kotlinHtml}")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.kotlinCoroutines}")
 
