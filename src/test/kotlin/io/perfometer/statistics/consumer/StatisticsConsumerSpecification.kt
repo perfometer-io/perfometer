@@ -1,7 +1,7 @@
 package io.perfometer.statistics.consumer
 
-import io.perfometer.fixture.ScenarioStatisticsFixture
 import io.perfometer.internal.helper.toZonedDateTimeUTC
+import io.perfometer.statistics.StatisticsFixture
 import io.perfometer.statistics.ScenarioSummary
 import io.perfometer.statistics.consumer.Output.HTML
 import io.perfometer.statistics.consumer.Output.TEXT_FILE
@@ -30,10 +30,9 @@ internal class StatisticsConsumerSpecification {
     @Test
     fun `should create a txt report file`() {
         // given a statistics with summary
-        val scenarioStatistics = ScenarioStatisticsFixture.singleGetRequestStatistics()
+        val scenarioSummary: ScenarioSummary = StatisticsFixture.singleGetRequestScenarioSummary()
 
         // when consuming the stats with Output.TEXT_FILE option selected
-        val scenarioSummary: ScenarioSummary = scenarioStatistics.finish()
         consumeStatistics(scenarioSummary, TEXT_FILE)
 
         // then a text file should be created with scenario start time UTC timestamp in filename
@@ -47,10 +46,9 @@ internal class StatisticsConsumerSpecification {
     @Test
     fun `should create an HTML report file`() {
         // given
-        val scenarioStatistics = ScenarioStatisticsFixture.singleGetRequestStatistics()
+        val scenarioSummary: ScenarioSummary = StatisticsFixture.singleGetRequestScenarioSummary()
 
         // when
-        val scenarioSummary: ScenarioSummary = scenarioStatistics.finish()
         consumeStatistics(scenarioSummary, HTML)
 
         // then

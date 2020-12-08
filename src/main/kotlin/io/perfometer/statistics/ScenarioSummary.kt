@@ -7,6 +7,7 @@ import kotlin.math.ceil
 
 data class SummaryData(
     val name: String,
+    val rps: List<Int>,
     val requestCount: Int,
     val failedRequestCount: Int,
     val fastestTime: Duration,
@@ -19,8 +20,15 @@ data class SummaryData(
     val slowestTime: Duration,
 ) {
 
+    val minimumRps = rps.minOrNull() ?: 0
+    val averageRps = rps.average().toInt()
+    val maximumRps = rps.maxOrNull() ?: 0
+
     val printableValues: Array<String> = arrayOf(
         name,
+        minimumRps.toString(),
+        averageRps.toString(),
+        maximumRps.toString(),
         requestCount.toString(),
         failedRequestCount.toString(),
         fastestTime.toReadableString(),
@@ -38,6 +46,9 @@ data class SummaryData(
     companion object {
         val headerNames: Array<String> = arrayOf(
             "REQUEST",
+            "MINIMUM RPS",
+            "AVERAGE RPS",
+            "MAXIMUM RPS",
             "COUNT",
             "FAILED COUNT",
             "FASTEST TIME",
@@ -60,6 +71,7 @@ class ScenarioSummary(
     val endTime: Instant,
 ) {
     private val requestStatistics = statistics.filterIsInstance<RequestStatistics>()
+
     val scenarioDuration: Duration = Duration.between(startTime, endTime)
     val totalSummary = if (requestStatistics.isEmpty()) null
     else generateSummary("TOTAL", requestStatistics)
@@ -76,17 +88,42 @@ class ScenarioSummary(
         val sortedTimes = statistics.map { it.timeTaken }.sorted()
         return SummaryData(
             name,
+            calculateRps(statistics),
             statistics.count(),
             statistics.filter { !it.httpStatus.isSuccess }.count(),
             sortedTimes.first(),
-            statistics.map { it.timeTaken.toMillis() }.average()
-                .let { Duration.ofMillis(it.toLong()) },
-            sortedTimes[ceil(sortedTimes.size * 0.95).toInt() - 1],
-            sortedTimes[ceil(sortedTimes.size * 0.96).toInt() - 1],
-            sortedTimes[ceil(sortedTimes.size * 0.97).toInt() - 1],
-            sortedTimes[ceil(sortedTimes.size * 0.98).toInt() - 1],
-            sortedTimes[ceil(sortedTimes.size * 0.99).toInt() - 1],
+            calculateAverageTime(statistics),
+            calculatePercentile(sortedTimes, 0.95),
+            calculatePercentile(sortedTimes, 0.96),
+            calculatePercentile(sortedTimes, 0.97),
+            calculatePercentile(sortedTimes, 0.98),
+            calculatePercentile(sortedTimes, 0.99),
             sortedTimes.last(),
         )
+    }
+
+    private fun calculatePercentile(sortedTimes: List<Duration>, percentile: Double) =
+        sortedTimes[ceil(sortedTimes.size * percentile).toInt() - 1]
+
+    private fun calculateAverageTime(statistics: Collection<RequestStatistics>) =
+        statistics
+            .map { it.timeTaken.toMillis() }
+            .average()
+            .let { Duration.ofMillis(it.toLong()) }
+
+    private fun calculateRps(statistics: Collection<RequestStatistics>): List<Int> =
+        statistics
+            .groupBy { it.endTime.epochSecond }
+            .mapValues { it.value.size }
+            .toList()
+            .fold(
+                intList((endTime.epochSecond - startTime.epochSecond).toInt() + 1),
+                { list, rps -> list[(rps.first - startTime.epochSecond).toInt()] = rps.second; list }
+            )
+
+    private fun intList(size: Int): ArrayList<Int> {
+        val intList = ArrayList<Int>(size)
+        for (i in 1..size) intList.add(0)
+        return intList
     }
 }
